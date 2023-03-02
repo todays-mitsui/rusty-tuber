@@ -1,6 +1,7 @@
 use super::{Expr, Identifier};
 use combine::parser::char::{char, digit, lower, upper};
 use combine::parser::choice::choice;
+use combine::EasyParser;
 use combine::{many1, ParseError, Parser, Stream};
 
 fn identifier<Input>() -> impl Parser<Input, Output = Identifier>
@@ -80,17 +81,31 @@ fn test_long_identifier() {
 
 // ========================================================================== //
 
-pub fn expr<Input>() -> impl Parser<Input, Output = Expr>
-where
-    Input: Stream<Token = char>,
-    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
-{
-    choice((
-        // apply(),
+parser! {
+    fn expr[Input]()(Input) -> Expr
+    where [
+        Input: Stream<Token = char>,
+        Input::Error: ParseError<char, Input::Range, Input::Position>,
+        <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+            From<::std::num::ParseIntError>,
+    ]
+    {
+        choice((
+            apply(),
+            lambda(),
+            symbol(),
+            var(),
+        ))
+    }
+}
 
-        symbol(),
-        var(),
-    ))
+#[test]
+fn test_expr() {
+    assert_eq!(expr().easy_parse("a"), Ok((Expr::var("a"), "")));
+    assert_eq!(
+        expr().easy_parse("`ab"),
+        Ok((Expr::apply(Expr::var("a"), Expr::var("b")), ""))
+    );
 }
 
 // ========================================================================== //
@@ -108,14 +123,8 @@ fn test_var() {
     assert!(var().parse(":abc").is_err());
     assert!(var().parse("^abc").is_err());
 
-    assert_eq!(
-        var().parse("abc"),
-        Ok((Expr::var("a"), "bc"))
-    );
-    assert_eq!(
-        var().parse("ABCabc"),
-        Ok((Expr::var("ABC"), "abc"))
-    );
+    assert_eq!(var().parse("abc"), Ok((Expr::var("a"), "bc")));
+    assert_eq!(var().parse("ABCabc"), Ok((Expr::var("ABC"), "abc")));
 }
 
 // ========================================================================== //
@@ -132,22 +141,76 @@ where
 fn test_symbol() {
     assert!(symbol().parse("abc").is_err());
 
+    assert_eq!(symbol().parse(":abc"), Ok((Expr::symbol("a"), "bc")));
+    assert_eq!(symbol().parse(":ABCabc"), Ok((Expr::symbol("ABC"), "abc")));
+}
+
+// ========================================================================== //
+
+parser! {
+    fn apply[Input]()(Input) -> Expr
+    where [
+        Input: Stream<Token = char>,
+        Input::Error: ParseError<char, Input::Range, Input::Position>,
+        <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+            From<::std::num::ParseIntError>,
+    ]
+    {
+        char('`').with(expr().and(expr())).map(|(lhs, rhs)| Expr::apply(lhs, rhs))
+    }
+}
+
+#[test]
+fn test_apply() {
+    assert!(expr().easy_parse("`a").is_err());
+
     assert_eq!(
-        symbol().parse(":abc"),
-        Ok((Expr::symbol("a"), "bc"))
+        expr().easy_parse("`ab"),
+        Ok((Expr::apply(Expr::var("a"), Expr::var("b")), ""))
     );
     assert_eq!(
-        symbol().parse(":ABCabc"),
-        Ok((Expr::symbol("ABC"), "abc"))
+        expr().easy_parse("``abc"),
+        Ok((
+            Expr::apply(Expr::apply(Expr::var("a"), Expr::var("b")), Expr::var("c")),
+            ""
+        ))
     );
 }
 
 // ========================================================================== //
 
-// pub fn apply<Input>() -> impl Parser<Input, Output = Expr>
-// where
-//     Input: Stream<Token = char>,
-//     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
-// {
-//     char('`').with(expr().and(expr())).map(|(lhs, rhs)| Expr::apply(lhs, rhs))
-// }
+parser! {
+    fn lambda[Input]()(Input) -> Expr
+    where [
+        Input: Stream<Token = char>,
+        Input::Error: ParseError<char, Input::Range, Input::Position>,
+        <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+            From<::std::num::ParseIntError>,
+    ]
+    {
+        char('^').with(identifier().skip(char('.')).and(expr())).map(|(param, body)| Expr::lambda(param, body))
+    }
+}
+
+#[test]
+fn test_lambda() {
+    assert!(expr().easy_parse("^a").is_err());
+
+    assert_eq!(
+        expr().easy_parse("^a.b"),
+        Ok((
+            Expr::lambda(Identifier("a".to_string()), Expr::var("b")),
+            ""
+        ))
+    );
+    assert_eq!(
+        expr().easy_parse("^a.^b.c"),
+        Ok((
+            Expr::lambda(
+                Identifier("a".to_string()),
+                Expr::lambda(Identifier("b".to_string()), Expr::var("c"))
+            ),
+            ""
+        ))
+    );
+}

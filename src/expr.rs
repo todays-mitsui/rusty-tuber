@@ -21,6 +21,16 @@ impl Expr {
     }
 
     pub fn apply(lhs: Expr, rhs: Expr) -> Expr {
-        Expr::Apply{ lhs: Box::new(lhs), rhs: Box::new(rhs) }
+        Expr::Apply {
+            lhs: Box::new(lhs),
+            rhs: Box::new(rhs),
+        }
+    }
+
+    pub fn lambda(param: Identifier, body: Expr) -> Expr {
+        Expr::Lambda {
+            param,
+            body: Box::new(body),
+        }
     }
 }
