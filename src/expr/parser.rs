@@ -111,10 +111,10 @@ parser! {
 
 #[test]
 fn test_expr() {
-    assert_eq!(expr().easy_parse("a"), Ok((Expr::var("a"), "")));
+    assert_eq!(expr().easy_parse("a"), Ok((Expr::v("a"), "")));
     assert_eq!(
         expr().easy_parse("`ab"),
-        Ok((Expr::apply(Expr::var("a"), Expr::var("b")), ""))
+        Ok((Expr::a(Expr::v("a"), Expr::v("b")), ""))
     );
 }
 
@@ -125,7 +125,7 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    identifier().map(Expr::Var)
+    identifier().map(Expr::Variable)
 }
 
 #[test]
@@ -133,8 +133,8 @@ fn test_var() {
     assert!(var().parse(":abc").is_err());
     assert!(var().parse("^abc").is_err());
 
-    assert_eq!(var().parse("abc"), Ok((Expr::var("a"), "bc")));
-    assert_eq!(var().parse("ABCabc"), Ok((Expr::var("ABC"), "abc")));
+    assert_eq!(var().parse("abc"), Ok((Expr::v("a"), "bc")));
+    assert_eq!(var().parse("ABCabc"), Ok((Expr::v("ABC"), "abc")));
 }
 
 // ========================================================================== //
@@ -151,8 +151,8 @@ where
 fn test_symbol() {
     assert!(symbol().parse("abc").is_err());
 
-    assert_eq!(symbol().parse(":abc"), Ok((Expr::symbol("a"), "bc")));
-    assert_eq!(symbol().parse(":ABCabc"), Ok((Expr::symbol("ABC"), "abc")));
+    assert_eq!(symbol().parse(":abc"), Ok((Expr::s("a"), "bc")));
+    assert_eq!(symbol().parse(":ABCabc"), Ok((Expr::s("ABC"), "abc")));
 }
 
 // ========================================================================== //
@@ -172,7 +172,7 @@ parser! {
                 expr()
                 .and(expr())
             )
-            .map(|(lhs, rhs)| Expr::apply(lhs, rhs))
+            .map(|(lhs, rhs)| Expr::a(lhs, rhs))
     }
 }
 
@@ -182,29 +182,29 @@ fn test_apply() {
 
     assert_eq!(
         expr().easy_parse("`ab"),
-        Ok((Expr::apply(Expr::var("a"), Expr::var("b")), ""))
+        Ok((Expr::a(Expr::v("a"), Expr::v("b")), ""))
     );
     assert_eq!(
         expr().easy_parse(" ` a b"),
-        Ok((Expr::apply(Expr::var("a"), Expr::var("b")), ""))
+        Ok((Expr::a(Expr::v("a"), Expr::v("b")), ""))
     );
     assert_eq!(
         expr().easy_parse("``abc"),
         Ok((
-            Expr::apply(Expr::apply(Expr::var("a"), Expr::var("b")), Expr::var("c")),
+            Expr::a(Expr::a(Expr::v("a"), Expr::v("b")), Expr::v("c")),
             ""
         ))
     );
     assert_eq!(
         expr().easy_parse(" ` ` a b c"),
         Ok((
-            Expr::apply(Expr::apply(Expr::var("a"), Expr::var("b")), Expr::var("c")),
+            Expr::a(Expr::a(Expr::v("a"), Expr::v("b")), Expr::v("c")),
             ""
         ))
     );
     assert_eq!(
         expr().easy_parse("`FOO BAR"),
-        Ok((Expr::apply(Expr::var("FOO"), Expr::var("BAR")), ""))
+        Ok((Expr::a(Expr::v("FOO"), Expr::v("BAR")), ""))
     );
 }
 
@@ -226,7 +226,7 @@ parser! {
                 .skip(spaces().with(char('.'))
             )
             .and(expr()))
-            .map(|(param, body)| Expr::lambda(param, body))
+            .map(|(param, body)| Expr::l(param, body))
     }
 }
 
@@ -236,24 +236,18 @@ fn test_lambda() {
 
     assert_eq!(
         expr().easy_parse("^a.b"),
-        Ok((
-            Expr::lambda(Identifier("a".to_string()), Expr::var("b")),
-            ""
-        ))
+        Ok((Expr::l(Identifier("a".to_string()), Expr::v("b")), ""))
     );
     assert_eq!(
         expr().easy_parse(" ^ a . b"),
-        Ok((
-            Expr::lambda(Identifier("a".to_string()), Expr::var("b")),
-            ""
-        ))
+        Ok((Expr::l(Identifier("a".to_string()), Expr::v("b")), ""))
     );
     assert_eq!(
         expr().easy_parse("^a.^b.c"),
         Ok((
-            Expr::lambda(
+            Expr::l(
                 Identifier("a".to_string()),
-                Expr::lambda(Identifier("b".to_string()), Expr::var("c"))
+                Expr::l(Identifier("b".to_string()), Expr::v("c"))
             ),
             ""
         ))
@@ -261,9 +255,9 @@ fn test_lambda() {
     assert_eq!(
         expr().easy_parse(" ^ a . ^ b . c"),
         Ok((
-            Expr::lambda(
+            Expr::l(
                 Identifier("a".to_string()),
-                Expr::lambda(Identifier("b".to_string()), Expr::var("c"))
+                Expr::l(Identifier("b".to_string()), Expr::v("c"))
             ),
             ""
         ))
