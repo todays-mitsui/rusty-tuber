@@ -81,8 +81,18 @@ fn test_long_identifier() {
 
 // ========================================================================== //
 
+pub fn expr<Input>() -> impl Parser<Input, Output = Expr>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+        From<::std::num::ParseIntError>,
+{
+    expr_()
+}
+
 parser! {
-    fn expr[Input]()(Input) -> Expr
+    fn expr_[Input]()(Input) -> Expr
     where [
         Input: Stream<Token = char>,
         Input::Error: ParseError<char, Input::Range, Input::Position>,
