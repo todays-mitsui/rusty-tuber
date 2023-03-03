@@ -1,5 +1,5 @@
 use super::{Expr, Identifier};
-use combine::parser::char::{char, digit, lower, upper};
+use combine::parser::char::{char, digit, lower, spaces, upper};
 use combine::parser::choice::choice;
 use combine::EasyParser;
 use combine::{many1, ParseError, Parser, Stream};
@@ -9,7 +9,7 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    choice((short_identifier(), long_identifier()))
+    spaces().with(choice((short_identifier(), long_identifier())))
 }
 
 #[test]
@@ -90,12 +90,12 @@ parser! {
             From<::std::num::ParseIntError>,
     ]
     {
-        choice((
+        spaces().with(choice((
             apply(),
             lambda(),
             symbol(),
             var(),
-        ))
+        )))
     }
 }
 
@@ -156,7 +156,13 @@ parser! {
             From<::std::num::ParseIntError>,
     ]
     {
-        char('`').with(expr().and(expr())).map(|(lhs, rhs)| Expr::apply(lhs, rhs))
+        spaces()
+            .with(char('`'))
+            .with(
+                expr()
+                .and(expr())
+            )
+            .map(|(lhs, rhs)| Expr::apply(lhs, rhs))
     }
 }
 
@@ -169,11 +175,26 @@ fn test_apply() {
         Ok((Expr::apply(Expr::var("a"), Expr::var("b")), ""))
     );
     assert_eq!(
+        expr().easy_parse(" ` a b"),
+        Ok((Expr::apply(Expr::var("a"), Expr::var("b")), ""))
+    );
+    assert_eq!(
         expr().easy_parse("``abc"),
         Ok((
             Expr::apply(Expr::apply(Expr::var("a"), Expr::var("b")), Expr::var("c")),
             ""
         ))
+    );
+    assert_eq!(
+        expr().easy_parse(" ` ` a b c"),
+        Ok((
+            Expr::apply(Expr::apply(Expr::var("a"), Expr::var("b")), Expr::var("c")),
+            ""
+        ))
+    );
+    assert_eq!(
+        expr().easy_parse("`FOO BAR"),
+        Ok((Expr::apply(Expr::var("FOO"), Expr::var("BAR")), ""))
     );
 }
 
@@ -188,7 +209,14 @@ parser! {
             From<::std::num::ParseIntError>,
     ]
     {
-        char('^').with(identifier().skip(char('.')).and(expr())).map(|(param, body)| Expr::lambda(param, body))
+        spaces()
+            .with(char('^'))
+            .with(
+                identifier()
+                .skip(spaces().with(char('.'))
+            )
+            .and(expr()))
+            .map(|(param, body)| Expr::lambda(param, body))
     }
 }
 
@@ -204,7 +232,24 @@ fn test_lambda() {
         ))
     );
     assert_eq!(
+        expr().easy_parse(" ^ a . b"),
+        Ok((
+            Expr::lambda(Identifier("a".to_string()), Expr::var("b")),
+            ""
+        ))
+    );
+    assert_eq!(
         expr().easy_parse("^a.^b.c"),
+        Ok((
+            Expr::lambda(
+                Identifier("a".to_string()),
+                Expr::lambda(Identifier("b".to_string()), Expr::var("c"))
+            ),
+            ""
+        ))
+    );
+    assert_eq!(
+        expr().easy_parse(" ^ a . ^ b . c"),
         Ok((
             Expr::lambda(
                 Identifier("a".to_string()),
