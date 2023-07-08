@@ -33,4 +33,38 @@ impl Expr {
             body: Box::new(body),
         }
     }
+
+    fn substitute(self, param: &Identifier, arg: &Expr) -> Expr {
+        match self {
+            Expr::Variable(id) => {
+                if &id == param {
+                    *arg.clone()
+                } else {
+                    Expr::Variable(id)
+                }
+            },
+            Expr::Symbol(_) => self.clone(),
+            Expr::Apply { lhs, rhs } => Expr::Apply {
+                lhs: Box::new(lhs.substitute(param, arg)),
+                rhs: Box::new(rhs.substitute(param, arg)),
+            },
+            Expr::Lambda { param: p, body } => {
+                if &p == param {
+                    Expr::Lambda { param: p, body }
+                } else {
+                    Expr::Lambda {
+                        param: p,
+                        body: Box::new(body.substitute(param, arg)),
+                    }
+                }
+            },
+        }
+    }
+}
+
+pub fn eval(lhs: Expr, rhs: Expr) -> Expr {
+    match lhs {
+        Expr::Lambda { param, body } => body.substitute(&param, &rhs),
+        _ => panic!("not a lambda"),
+    }
 }

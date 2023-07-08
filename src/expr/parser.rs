@@ -1,8 +1,9 @@
 use super::{Expr, Identifier};
+use combine::{many1, ParseError, Parser, Stream};
 use combine::parser::char::{char, digit, lower, spaces, upper};
 use combine::parser::choice::choice;
+#[allow(unused_imports)]
 use combine::EasyParser;
-use combine::{many1, ParseError, Parser, Stream};
 
 fn identifier<Input>() -> impl Parser<Input, Output = Identifier>
 where
