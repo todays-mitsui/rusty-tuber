@@ -1,4 +1,6 @@
+mod env;
 mod expr;
+mod func;
 
 #[macro_use]
 extern crate combine;
@@ -13,6 +15,6 @@ fn main() {
         expr().easy_parse("` ^p.^x.^y.x `` ``s``s`ks``s`kk``s`ks``s`k`sik`kk :A :B")
     );
 
-    let mut s:Expr = expr().easy_parse("^x.^y.^z.``xz`yz").unwrap().0;
+    let mut s: Expr = expr().easy_parse("^x.^y.^z.``xz`yz").unwrap().0;
     println!("{:?}", s);
 }

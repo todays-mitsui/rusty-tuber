@@ -1,4 +1,4 @@
-use expr::{Expr, Identifier};
+use crate::expr::{Expr, Identifier};
 
 pub struct Func {
     params: Vec<Identifier>,
@@ -19,7 +19,7 @@ impl Func {
     //     body
     // }
 
-    pub fn ality(&self) -> usize {
+    pub fn arity(&self) -> usize {
         self.params.len()
     }
 
@@ -30,5 +30,33 @@ impl Func {
             body = body.substitute(param, &arg);
         }
         body
+    }
+}
+
+pub fn i() -> Func {
+    Func {
+        params: vec![Identifier::new("x")],
+        body: Expr::v("x"),
+    }
+}
+
+pub fn k() -> Func {
+    Func {
+        params: vec![Identifier::new("x"), Identifier::new("y")],
+        body: Expr::v("x"),
+    }
+}
+
+pub fn s() -> Func {
+    Func {
+        params: vec![
+            Identifier::new("x"),
+            Identifier::new("y"),
+            Identifier::new("z"),
+        ],
+        body: Expr::a(
+            Expr::a(Expr::v("x"), Expr::v("z")),
+            Expr::a(Expr::v("y"), Expr::v("z")),
+        ),
     }
 }

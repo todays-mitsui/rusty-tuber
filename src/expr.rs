@@ -1,9 +1,15 @@
 pub mod parser;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct Identifier(String);
 
-#[derive(Debug, PartialEq)]
+impl Identifier {
+    pub fn new(s: &str) -> Identifier {
+        Identifier(String::from(s))
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Variable(Identifier),
     Symbol(Identifier),
@@ -34,20 +40,23 @@ impl Expr {
         }
     }
 
-    fn substitute(self, param: &Identifier, arg: &Expr) -> Expr {
+    pub fn substitute(self, param: &Identifier, arg: &Expr) -> Expr {
         match self {
             Expr::Variable(id) => {
                 if &id == param {
-                    *arg.clone()
+                    arg.clone()
                 } else {
                     Expr::Variable(id)
                 }
-            },
-            Expr::Symbol(_) => self.clone(),
+            }
+
+            Expr::Symbol(id) => Expr::Symbol(id),
+
             Expr::Apply { lhs, rhs } => Expr::Apply {
                 lhs: Box::new(lhs.substitute(param, arg)),
                 rhs: Box::new(rhs.substitute(param, arg)),
             },
+
             Expr::Lambda { param: p, body } => {
                 if &p == param {
                     Expr::Lambda { param: p, body }
@@ -57,7 +66,7 @@ impl Expr {
                         body: Box::new(body.substitute(param, arg)),
                     }
                 }
-            },
+            }
         }
     }
 }
