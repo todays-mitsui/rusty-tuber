@@ -50,7 +50,7 @@ impl Expr {
                 }
             }
 
-            Expr::Symbol(id) => Expr::Symbol(id),
+            Expr::Symbol(_) => self,
 
             Expr::Apply { lhs, rhs } => Expr::Apply {
                 lhs: Box::new(lhs.substitute(param, arg)),

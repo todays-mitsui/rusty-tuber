@@ -25,6 +25,14 @@ impl Env {
     pub fn arity(&self, id: &Identifier) -> Option<usize> {
         self.get(id).map(|f| f.arity())
     }
+
+    pub fn del(&mut self, id: &Identifier) {
+        self.env.remove(id);
+    }
+
+    pub fn count(&self) -> usize {
+        self.env.len()
+    }
 }
 
 impl Default for Env {
@@ -46,6 +54,9 @@ impl From<Vec<(Identifier, Func)>> for Env {
 #[test]
 fn test_env_def() {
     let mut env = Env::new();
+
+    assert_eq!(env.count(), 0);
+
     env.def(
         Identifier::new("I"),
         Func::new(vec![Identifier::new("x")], Expr::v("x")),
@@ -72,10 +83,15 @@ fn test_env_def() {
         ),
     );
 
+    assert_eq!(env.count(), 3);
     assert_eq!(env.arity(&Identifier::new("I")), Some(1));
     assert_eq!(env.arity(&Identifier::new("K")), Some(2));
     assert_eq!(env.arity(&Identifier::new("S")), Some(3));
     assert_eq!(env.arity(&Identifier::new("UNDEFINED")), None);
+
+    env.del(&Identifier::new("I"));
+    assert_eq!(env.count(), 2);
+    assert_eq!(env.arity(&Identifier::new("I")), None);
 }
 
 #[test]
@@ -103,6 +119,7 @@ fn test_env_from() {
         (Identifier::new("S"), s),
     ]);
 
+    assert_eq!(env.count(), 3);
     assert_eq!(env.arity(&Identifier::new("I")), Some(1));
     assert_eq!(env.arity(&Identifier::new("K")), Some(2));
     assert_eq!(env.arity(&Identifier::new("S")), Some(3));

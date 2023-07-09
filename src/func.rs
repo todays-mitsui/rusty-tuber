@@ -1,5 +1,6 @@
 use crate::expr::{Expr, Identifier};
 
+#[derive(Debug, PartialEq)]
 pub struct Func {
     params: Vec<Identifier>,
     body: Expr,
