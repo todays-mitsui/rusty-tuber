@@ -22,7 +22,7 @@ impl Identifier {
 
         let mut i = 0;
         while vars.contains(&Identifier(name.clone())) {
-            name = format!("{}{}", self.0, i);
+            name = format!("{}{}", self.0.to_uppercase(), i);
             i += 1;
         }
         Identifier(name)
@@ -219,4 +219,25 @@ fn test_eval_other() {
     assert_eq!(eval(&v, &s), None);
     assert_eq!(eval(&s, &s), None);
     assert_eq!(eval(&a, &s), None);
+}
+
+#[test]
+fn test_expr_substitute() {
+    assert_eq!(
+        Expr::l(Identifier::new("z"), Expr::v("x"))
+            .substitute(&Identifier::new("x"), &Expr::v("y")),
+        Expr::l(Identifier::new("z"), Expr::v("y"))
+    );
+
+    assert_eq!(
+        Expr::l(
+            Identifier::new("Y"),
+            Expr::l(Identifier::new("y"), Expr::a(Expr::v("x"), Expr::v("Y")))
+        )
+        .substitute(&Identifier::new("x"), &Expr::v("y")),
+        Expr::l(
+            Identifier::new("Y"),
+            Expr::l(Identifier::new("Y0"), Expr::a(Expr::v("y"), Expr::v("Y")))
+        )
+    );
 }
