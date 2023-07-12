@@ -53,38 +53,43 @@ impl Expr {
     }
 }
 
-#[test]
-fn test_free_vars() {
-    assert_eq!(Expr::v("a").free_vars().count(), 1);
-    assert!(Expr::v("a").free_vars().contains(&Identifier::new("a")));
+#[cfg(test)]
+mod tests {
+    use crate::expr::{Expr, Identifier};
 
-    assert_eq!(Expr::s("a").free_vars().count(), 0);
+    #[test]
+    fn test_free_vars() {
+        assert_eq!(Expr::v("a").free_vars().count(), 1);
+        assert!(Expr::v("a").free_vars().contains(&Identifier::new("a")));
 
-    assert_eq!(Expr::a(Expr::v("a"), Expr::v("b")).free_vars().count(), 2);
-    assert!(Expr::a(Expr::v("a"), Expr::v("b"))
-        .free_vars()
-        .contains(&Identifier::new("a")));
-    assert!(Expr::a(Expr::v("a"), Expr::v("b"))
-        .free_vars()
-        .contains(&Identifier::new("b")));
+        assert_eq!(Expr::s("a").free_vars().count(), 0);
 
-    assert_eq!(
-        Expr::l(Identifier::new("a"), Expr::v("a"))
+        assert_eq!(Expr::a(Expr::v("a"), Expr::v("b")).free_vars().count(), 2);
+        assert!(Expr::a(Expr::v("a"), Expr::v("b"))
             .free_vars()
-            .count(),
-        0
-    );
-    assert!(!Expr::l(Identifier::new("a"), Expr::v("a"))
-        .free_vars()
-        .contains(&Identifier::new("a")));
-
-    assert_eq!(
-        Expr::l(Identifier::new("a"), Expr::v("b"))
+            .contains(&Identifier::new("a")));
+        assert!(Expr::a(Expr::v("a"), Expr::v("b"))
             .free_vars()
-            .count(),
-        1
-    );
-    assert!(Expr::l(Identifier::new("a"), Expr::v("b"))
-        .free_vars()
-        .contains(&Identifier::new("b")));
+            .contains(&Identifier::new("b")));
+
+        assert_eq!(
+            Expr::l(Identifier::new("a"), Expr::v("a"))
+                .free_vars()
+                .count(),
+            0
+        );
+        assert!(!Expr::l(Identifier::new("a"), Expr::v("a"))
+            .free_vars()
+            .contains(&Identifier::new("a")));
+
+        assert_eq!(
+            Expr::l(Identifier::new("a"), Expr::v("b"))
+                .free_vars()
+                .count(),
+            1
+        );
+        assert!(Expr::l(Identifier::new("a"), Expr::v("b"))
+            .free_vars()
+            .contains(&Identifier::new("b")));
+    }
 }

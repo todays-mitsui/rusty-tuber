@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::expr::{Expr, Identifier};
+use crate::expr::Identifier;
 use crate::func::Func;
 
 pub struct Env {
@@ -51,26 +51,63 @@ impl From<Vec<(Identifier, Func)>> for Env {
     }
 }
 
-#[test]
-fn test_env_def() {
-    let mut env = Env::new();
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::expr::{Expr, Identifier};
+    use crate::func::Func;
 
-    assert_eq!(env.count(), 0);
+    #[test]
+    fn test_env_def() {
+        let mut env = Env::new();
 
-    env.def(
-        Identifier::new("I"),
-        Func::new(vec![Identifier::new("x")], Expr::v("x")),
-    );
-    env.def(
-        Identifier::new("K"),
-        Func::new(
+        assert_eq!(env.count(), 0);
+
+        env.def(
+            Identifier::new("I"),
+            Func::new(vec![Identifier::new("x")], Expr::v("x")),
+        );
+        env.def(
+            Identifier::new("K"),
+            Func::new(
+                vec![Identifier::new("x"), Identifier::new("y")],
+                Expr::v("x"),
+            ),
+        );
+        env.def(
+            Identifier::new("S"),
+            Func::new(
+                vec![
+                    Identifier::new("x"),
+                    Identifier::new("y"),
+                    Identifier::new("z"),
+                ],
+                Expr::a(
+                    Expr::a(Expr::v("x"), Expr::v("z")),
+                    Expr::a(Expr::v("y"), Expr::v("z")),
+                ),
+            ),
+        );
+
+        assert_eq!(env.count(), 3);
+        assert_eq!(env.arity(&Identifier::new("I")), Some(1));
+        assert_eq!(env.arity(&Identifier::new("K")), Some(2));
+        assert_eq!(env.arity(&Identifier::new("S")), Some(3));
+        assert_eq!(env.arity(&Identifier::new("UNDEFINED")), None);
+
+        env.del(&Identifier::new("I"));
+        assert_eq!(env.count(), 2);
+        assert_eq!(env.arity(&Identifier::new("I")), None);
+    }
+
+    #[test]
+    fn test_env_from() {
+        let i: Func = Func::new(vec![Identifier::new("x")], Expr::v("x"));
+        let k: Func = Func::new(
             vec![Identifier::new("x"), Identifier::new("y")],
             Expr::v("x"),
-        ),
-    );
-    env.def(
-        Identifier::new("S"),
-        Func::new(
+        );
+        let s: Func = Func::new(
             vec![
                 Identifier::new("x"),
                 Identifier::new("y"),
@@ -80,48 +117,18 @@ fn test_env_def() {
                 Expr::a(Expr::v("x"), Expr::v("z")),
                 Expr::a(Expr::v("y"), Expr::v("z")),
             ),
-        ),
-    );
+        );
 
-    assert_eq!(env.count(), 3);
-    assert_eq!(env.arity(&Identifier::new("I")), Some(1));
-    assert_eq!(env.arity(&Identifier::new("K")), Some(2));
-    assert_eq!(env.arity(&Identifier::new("S")), Some(3));
-    assert_eq!(env.arity(&Identifier::new("UNDEFINED")), None);
+        let env: Env = Env::from(vec![
+            (Identifier::new("I"), i),
+            (Identifier::new("K"), k),
+            (Identifier::new("S"), s),
+        ]);
 
-    env.del(&Identifier::new("I"));
-    assert_eq!(env.count(), 2);
-    assert_eq!(env.arity(&Identifier::new("I")), None);
-}
-
-#[test]
-fn test_env_from() {
-    let i: Func = Func::new(vec![Identifier::new("x")], Expr::v("x"));
-    let k: Func = Func::new(
-        vec![Identifier::new("x"), Identifier::new("y")],
-        Expr::v("x"),
-    );
-    let s: Func = Func::new(
-        vec![
-            Identifier::new("x"),
-            Identifier::new("y"),
-            Identifier::new("z"),
-        ],
-        Expr::a(
-            Expr::a(Expr::v("x"), Expr::v("z")),
-            Expr::a(Expr::v("y"), Expr::v("z")),
-        ),
-    );
-
-    let env: Env = Env::from(vec![
-        (Identifier::new("I"), i),
-        (Identifier::new("K"), k),
-        (Identifier::new("S"), s),
-    ]);
-
-    assert_eq!(env.count(), 3);
-    assert_eq!(env.arity(&Identifier::new("I")), Some(1));
-    assert_eq!(env.arity(&Identifier::new("K")), Some(2));
-    assert_eq!(env.arity(&Identifier::new("S")), Some(3));
-    assert_eq!(env.arity(&Identifier::new("UNDEFINED")), None);
+        assert_eq!(env.count(), 3);
+        assert_eq!(env.arity(&Identifier::new("I")), Some(1));
+        assert_eq!(env.arity(&Identifier::new("K")), Some(2));
+        assert_eq!(env.arity(&Identifier::new("S")), Some(3));
+        assert_eq!(env.arity(&Identifier::new("UNDEFINED")), None);
+    }
 }
