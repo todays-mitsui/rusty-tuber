@@ -39,13 +39,6 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn is_apply(&self) -> bool {
-        match self {
-            Expr::Apply { .. } => true,
-            _ => false,
-        }
-    }
-
     pub fn destruct_apply(self) -> (Expr, Expr) {
         match self {
             Expr::Apply { lhs, rhs } => (*lhs, *rhs),

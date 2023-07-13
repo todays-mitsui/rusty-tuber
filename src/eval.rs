@@ -1,36 +1,54 @@
 use crate::env::Env;
 use crate::expr::Expr;
+use crate::expr::Expr::*;
 
-pub struct Eval<'a> {
+pub struct EvalSteps<'a> {
     expr: Expr,
     stack: Stack,
     env: &'a Env,
 }
 
-impl Eval<'_> {
-    pub fn new(expr: Expr, env: &Env) -> Eval {
+impl EvalSteps<'_> {
+    pub fn new(expr: Expr, env: &Env) -> EvalSteps {
         let stack = Stack(vec![expr.clone()]);
-        Eval { expr, stack, env }
+        EvalSteps { expr, stack, env }
     }
 
-    // pub fn steps(&mut self) -> Vec<Expr> {
-    //     let mut generator = || {
-    //         while self.expr.is_apply() {
-    //             let (lhs, rhs) = self.expr.destruct_apply();
-    //             self.expr = lhs;
-    //             self.stack.push(rhs);
+    pub fn assemble(&self) -> Expr {
+        let mut expr = self.expr.clone();
 
-    //             let maybe_arity = self.expr.arity(&self.env);
+        for arg in self.stack.all() {
+            expr = Expr::a(expr, arg);
+        }
 
-    //             if maybe_arity.map(|a| a <= self.stack.len()).unwrap_or(false) {
-    //                 let arity = maybe_arity.unwrap();
-    //                 let args = self.stack.pop(arity);
-    //                 self.expr = self.expr.apply(&self.env, args);
-    //             }
-    //         }
-    //     };
-    // }
+        expr
+    }
 }
+
+// impl Iterator for EvalSteps<'_> {
+//     type Item = Expr;
+
+//     fn next(&mut self) -> Option<Self::Item> {
+//         while let Apply { lhs, rhs } = self.expr {
+//             self.expr = *lhs;
+//             self.stack.push(*rhs);
+
+//             let maybe_arity = self.expr.arity(&self.env);
+
+//             if maybe_arity.map(|a| a <= self.stack.len()).unwrap_or(false) {
+//                 let arity = maybe_arity.unwrap();
+//                 let args = self.stack.pop(arity);
+//                 args.reverse();
+
+//                 self.expr = self.expr.apply(&self.env, args);
+
+//                 return Some(self.assemble());
+//             }
+//         }
+
+//         return None;
+//     }
+// }
 
 // ========================================================================== //
 
@@ -51,13 +69,17 @@ impl Stack {
         self.0.drain(length - n..).rev().collect()
     }
 
+    fn all(&self) -> Vec<Expr> {
+        self.0.iter().rev().cloned().collect()
+    }
+
     fn len(&self) -> usize {
         self.0.len()
     }
 }
 
 #[test]
-fn test_stack() {
+fn test_stack_pop() {
     let mut stack = Stack(vec![Expr::v("x"), Expr::v("y")]);
 
     assert_eq!(stack.len(), 2);
@@ -73,4 +95,11 @@ fn test_stack() {
     assert_eq!(stack.pop(1), vec![Expr::v("x")]);
 
     assert_eq!(stack.len(), 0);
+}
+
+#[test]
+fn test_stack_all() {
+    let stack = Stack(vec![Expr::v("x"), Expr::v("y"), Expr::v("z")]);
+
+    assert_eq!(stack.all(), vec![Expr::v("z"), Expr::v("y"), Expr::v("x")]);
 }
