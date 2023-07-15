@@ -187,92 +187,9 @@ impl From<&str> for Expr {
     }
 }
 
-pub fn eval(lhs: &Expr, rhs: &Expr) -> Option<Expr> {
-    match lhs {
-        Expr::Lambda { param, body } => Some(body.clone().substitute(param, rhs)),
-        _ => None,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_eval_i() {
-        let i = Expr::l(Identifier::new("x"), Expr::v("x"));
-        let a = Expr::s("a");
-        let expected = Expr::s("a");
-        assert_eq!(eval(&i, &a), Some(expected));
-    }
-
-    #[test]
-    fn test_eval_k() {
-        let k = Expr::l(
-            Identifier::new("x"),
-            Expr::l(Identifier::new("y"), Expr::v("x")),
-        );
-
-        assert_eq!(
-            eval(&k, &k),
-            Some(Expr::l(
-                Identifier::new("y"),
-                Expr::l(
-                    Identifier::new("x"),
-                    Expr::l(Identifier::new("y"), Expr::v("x")),
-                ),
-            ))
-        );
-        assert_eq!(
-            eval(&eval(&k, &k).unwrap(), &Expr::s("a")),
-            Some(Expr::l(
-                Identifier::new("x"),
-                Expr::l(Identifier::new("y"), Expr::v("x")),
-            ))
-        );
-    }
-
-    #[test]
-    fn test_eval_s() {
-        let s = Expr::l(
-            Identifier::new("x"),
-            Expr::l(
-                Identifier::new("y"),
-                Expr::l(
-                    Identifier::new("z"),
-                    Expr::a(
-                        Expr::a(Expr::v("x"), Expr::v("z")),
-                        Expr::a(Expr::v("y"), Expr::v("z")),
-                    ),
-                ),
-            ),
-        );
-        let y = Expr::v("y");
-
-        assert_eq!(
-            eval(&s, &y),
-            Some(Expr::l(
-                Identifier::new("Y"),
-                Expr::l(
-                    Identifier::new("z"),
-                    Expr::a(
-                        Expr::a(Expr::v("y"), Expr::v("z")),
-                        Expr::a(Expr::v("Y"), Expr::v("z")),
-                    ),
-                ),
-            ))
-        );
-    }
-
-    #[test]
-    fn test_eval_other() {
-        let s = Expr::s("s");
-        let v = Expr::v("v");
-        let a = Expr::a(Expr::v("x"), Expr::v("y"));
-        assert_eq!(eval(&v, &s), None);
-        assert_eq!(eval(&s, &s), None);
-        assert_eq!(eval(&a, &s), None);
-    }
 
     #[test]
     fn test_expr_substitute() {
