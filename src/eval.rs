@@ -32,17 +32,17 @@ impl Iterator for EvalSteps {
         while let Apply { lhs, rhs } = self.expr.clone() {
             self.expr = *lhs;
             self.stack.push(*rhs);
+        }
 
-            let maybe_arity = self.expr.arity(&self.env);
+        let maybe_arity = self.expr.arity(&self.env);
 
-            if maybe_arity.map(|a| a <= self.stack.len()).unwrap_or(false) {
-                let arity = maybe_arity.unwrap();
-                let args = self.stack.pop(arity);
+        if maybe_arity.map(|a| a <= self.stack.len()).unwrap_or(false) {
+            let arity = maybe_arity.unwrap();
+            let args = self.stack.pop(arity);
 
-                self.expr = self.expr.apply(&self.env, args);
+            self.expr = self.expr.apply(&self.env, args);
 
-                return Some(self.assemble());
-            }
+            return Some(self.assemble());
         }
 
         return None;
@@ -51,6 +51,7 @@ impl Iterator for EvalSteps {
 
 // ========================================================================== //
 
+#[derive(Debug)]
 struct Stack(Vec<Expr>);
 
 impl Stack {
@@ -102,6 +103,43 @@ mod tests {
         );
 
         Env::from(vec![("i".into(), i), ("k".into(), k), ("s".into(), s)])
+    }
+
+    #[test]
+    fn test_eval_steps_lambda_i() {
+        let i = Expr::l("x".into(), "x".into());
+        let expr = Expr::a(i, ":a".into());
+
+        let mut steps = EvalSteps::new(expr, Env::new());
+
+        assert_eq!(steps.next(), Some(":a".into()));
+        assert_eq!(steps.next(), None);
+    }
+
+    #[test]
+    fn test_eval_steps_lambda_k_1() {
+        let k = Expr::l("x".into(), Expr::l("y".into(), "x".into()));
+        let expr = Expr::a(k, ":a".into());
+
+        let mut steps = EvalSteps::new(expr, Env::new());
+
+        assert_eq!(steps.next(), Some(Expr::l("y".into(), ":a".into())));
+        assert_eq!(steps.next(), None);
+    }
+
+    #[test]
+    fn test_eval_steps_lambda_k_2() {
+        let k = Expr::l("x".into(), Expr::l("y".into(), "x".into()));
+        let expr = Expr::a(Expr::a(k, ":a".into()), ":b".into());
+
+        let mut steps = EvalSteps::new(expr, Env::new());
+
+        assert_eq!(
+            steps.next(),
+            Some(Expr::a(Expr::l("y".into(), ":a".into()), ":b".into()))
+        );
+        assert_eq!(steps.next(), Some(":a".into()));
+        assert_eq!(steps.next(), None);
     }
 
     #[test]
