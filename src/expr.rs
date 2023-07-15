@@ -278,21 +278,20 @@ mod tests {
     fn test_expr_substitute() {
         // ^z.x [x := y] => ^z.y
         assert_eq!(
-            Expr::l(Identifier::new("z"), Expr::v("x"))
-                .substitute(&Identifier::new("x"), &Expr::v("y")),
-            Expr::l(Identifier::new("z"), Expr::v("y"))
+            Expr::l("z".into(), "x".into()).substitute(&"x".into(), &"y".into()),
+            Expr::l("z".into(), "y".into())
         );
 
         // ^Y.^y.`xY [x := y] => ^Y.^Y0.`yY
         assert_eq!(
             Expr::l(
-                Identifier::new("Y"),
-                Expr::l(Identifier::new("y"), Expr::a(Expr::v("x"), Expr::v("Y")))
+                "Y".into(),
+                Expr::l("y".into(), Expr::a("x".into(), "Y".into()))
             )
-            .substitute(&Identifier::new("x"), &Expr::v("y")),
+            .substitute(&"x".into(), &"y".into()),
             Expr::l(
-                Identifier::new("Y"),
-                Expr::l(Identifier::new("Y0"), Expr::a(Expr::v("y"), Expr::v("Y")))
+                "Y".into(),
+                Expr::l("Y0".into(), Expr::a("y".into(), "Y".into()))
             )
         );
     }
