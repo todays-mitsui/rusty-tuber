@@ -33,8 +33,6 @@ impl Iterator for EvalSteps {
             self.expr = *lhs;
             self.stack.push(*rhs);
 
-            Some(self.assemble());
-
             let maybe_arity = self.expr.arity(&self.env);
 
             if maybe_arity.map(|a| a <= self.stack.len()).unwrap_or(false) {
@@ -87,6 +85,29 @@ impl Stack {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::func::Func;
+
+    #[test]
+    fn test_eval_steps_func() {
+        let i = Func::new(vec!["x".into()], "x".into());
+        let k = Func::new(vec!["x".into(), "y".into()], "x".into());
+        let s = Func::new(
+            vec!["x".into(), "y".into(), "z".into()],
+            Expr::a(
+                Expr::a("x".into(), "z".into()),
+                Expr::a("y".into(), "z".into()),
+            ),
+        );
+
+        let env = Env::from(vec![("i".into(), i), ("k".into(), k), ("s".into(), s)]);
+
+        let expr = Expr::a("i".into(), ":a".into());
+
+        let mut steps = EvalSteps::new(expr, env);
+
+        assert_eq!(steps.next(), Some(":a".into()));
+        assert_eq!(steps.next(), None);
+    }
 
     #[test]
     fn test_stack_pop() {
