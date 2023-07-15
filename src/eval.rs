@@ -10,7 +10,7 @@ pub struct EvalSteps {
 
 impl EvalSteps {
     pub fn new(expr: Expr, env: Env) -> EvalSteps {
-        let stack = Stack(vec![expr.clone()]);
+        let stack = Stack::new();
         EvalSteps { expr, stack, env }
     }
 
@@ -37,8 +37,7 @@ impl Iterator for EvalSteps {
 
             if maybe_arity.map(|a| a <= self.stack.len()).unwrap_or(false) {
                 let arity = maybe_arity.unwrap();
-                let mut args = self.stack.pop(arity);
-                args.reverse();
+                let args = self.stack.pop(arity);
 
                 self.expr = self.expr.apply(&self.env, args);
 
@@ -55,6 +54,10 @@ impl Iterator for EvalSteps {
 struct Stack(Vec<Expr>);
 
 impl Stack {
+    fn new() -> Stack {
+        Stack(Vec::new())
+    }
+
     fn push(&mut self, expr: Expr) {
         self.0.push(expr);
     }
@@ -87,8 +90,7 @@ mod tests {
     use super::*;
     use crate::func::Func;
 
-    #[test]
-    fn test_eval_steps_func() {
+    fn setup() -> Env {
         let i = Func::new(vec!["x".into()], "x".into());
         let k = Func::new(vec!["x".into(), "y".into()], "x".into());
         let s = Func::new(
@@ -99,13 +101,87 @@ mod tests {
             ),
         );
 
-        let env = Env::from(vec![("i".into(), i), ("k".into(), k), ("s".into(), s)]);
+        Env::from(vec![("i".into(), i), ("k".into(), k), ("s".into(), s)])
+    }
+
+    #[test]
+    fn test_eval_steps_func_i() {
+        let env = setup();
 
         let expr = Expr::a("i".into(), ":a".into());
 
         let mut steps = EvalSteps::new(expr, env);
 
         assert_eq!(steps.next(), Some(":a".into()));
+        assert_eq!(steps.next(), None);
+    }
+
+    #[test]
+    fn test_eval_steps_func_k_1() {
+        let env = setup();
+
+        let expr = Expr::a("k".into(), ":a".into());
+
+        let mut steps = EvalSteps::new(expr, env);
+
+        // k の arity が2なのに対して引数を1つしか与えていないので簡約されない
+        assert_eq!(steps.next(), None);
+    }
+
+    #[test]
+    fn test_eval_steps_func_k_2() {
+        let env = setup();
+
+        let expr = Expr::a(Expr::a("k".into(), ":a".into()), ":b".into());
+
+        let mut steps = EvalSteps::new(expr, env);
+
+        assert_eq!(steps.next(), Some(":a".into()));
+        assert_eq!(steps.next(), None);
+    }
+
+    #[test]
+    fn test_eval_steps_func_s_1() {
+        let env = setup();
+
+        let expr = Expr::a("s".into(), ":a".into());
+
+        let mut steps = EvalSteps::new(expr, env);
+
+        // s の arity が3なのに対して引数を1つしか与えていないので簡約されない
+        assert_eq!(steps.next(), None);
+    }
+
+    #[test]
+    fn test_eval_steps_func_s_2() {
+        let env = setup();
+
+        let expr = Expr::a(Expr::a("s".into(), ":a".into()), ":b".into());
+
+        let mut steps = EvalSteps::new(expr, env);
+
+        // s の arity が3なのに対して引数を2つしか与えていないので簡約されない
+        assert_eq!(steps.next(), None);
+    }
+
+    #[test]
+    fn test_eval_steps_func_s_3() {
+        let env = setup();
+
+        let expr = Expr::a(
+            Expr::a(Expr::a("s".into(), ":a".into()), ":b".into()),
+            ":c".into(),
+        );
+
+        let mut steps = EvalSteps::new(expr, env);
+
+        assert_eq!(
+            steps.next(),
+            Some(Expr::a(
+                Expr::a(":a".into(), ":c".into()),
+                Expr::a(":b".into(), ":c".into())
+            ))
+        );
         assert_eq!(steps.next(), None);
     }
 
