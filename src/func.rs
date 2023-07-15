@@ -24,7 +24,6 @@ impl Func {
         self.params.len()
     }
 
-    // copilot が生成した
     pub fn apply(&self, args: Vec<Expr>) -> Expr {
         let mut body = self.body.clone();
         for (param, arg) in self.params.iter().zip(args) {
