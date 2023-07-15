@@ -29,10 +29,9 @@ impl Iterator for EvalSteps {
     type Item = Expr;
 
     fn next(&mut self) -> Option<Self::Item> {
-
-        while let Apply { lhs, rhs } = self.expr {
-            self.expr = **lhs;
-            self.stack.push(**rhs);
+        while let Apply { lhs, rhs } = self.expr.clone() {
+            self.expr = *lhs;
+            self.stack.push(*rhs);
 
             Some(self.assemble());
 
@@ -83,28 +82,35 @@ impl Stack {
     }
 }
 
-#[test]
-fn test_stack_pop() {
-    let mut stack = Stack(vec![Expr::v("x"), Expr::v("y")]);
+// ========================================================================== //
 
-    assert_eq!(stack.len(), 2);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    stack.push(Expr::v("z"));
+    #[test]
+    fn test_stack_pop() {
+        let mut stack = Stack(vec![Expr::v("x"), Expr::v("y")]);
 
-    assert_eq!(stack.len(), 3);
+        assert_eq!(stack.len(), 2);
 
-    assert_eq!(stack.pop(2), vec![Expr::v("z"), Expr::v("y")]);
+        stack.push(Expr::v("z"));
 
-    assert_eq!(stack.len(), 1);
+        assert_eq!(stack.len(), 3);
 
-    assert_eq!(stack.pop(1), vec![Expr::v("x")]);
+        assert_eq!(stack.pop(2), vec![Expr::v("z"), Expr::v("y")]);
 
-    assert_eq!(stack.len(), 0);
-}
+        assert_eq!(stack.len(), 1);
 
-#[test]
-fn test_stack_all() {
-    let stack = Stack(vec![Expr::v("x"), Expr::v("y"), Expr::v("z")]);
+        assert_eq!(stack.pop(1), vec![Expr::v("x")]);
 
-    assert_eq!(stack.all(), vec![Expr::v("z"), Expr::v("y"), Expr::v("x")]);
+        assert_eq!(stack.len(), 0);
+    }
+
+    #[test]
+    fn test_stack_all() {
+        let stack = Stack(vec![Expr::v("x"), Expr::v("y"), Expr::v("z")]);
+
+        assert_eq!(stack.all(), vec![Expr::v("z"), Expr::v("y"), Expr::v("x")]);
+    }
 }

@@ -157,16 +157,12 @@ impl Expr {
 impl Expr {
     pub fn apply(&self, env: &Env, args: Vec<Expr>) -> Expr {
         match self {
-            Expr::Lambda { param, body } => {
-                body.clone().substitute(&param, &args[0])
-            }
+            Expr::Lambda { param, body } => body.clone().substitute(&param, &args[0]),
 
-            Expr::Variable(id) => {
-                match env.get(&id) {
-                    Some(func) => func.apply(args),
-                    None => panic!("apply: not found"),
-                }
-            }
+            Expr::Variable(id) => match env.get(&id) {
+                Some(func) => func.apply(args),
+                None => panic!("apply: not found"),
+            },
 
             _ => panic!("apply: not a function"),
         }
