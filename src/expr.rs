@@ -30,6 +30,14 @@ impl Identifier {
     }
 }
 
+impl From<&str> for Identifier {
+    fn from(s: &str) -> Self {
+        Identifier::new(s)
+    }
+}
+
+// ========================================================================== //
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     Variable(Identifier),
@@ -165,6 +173,16 @@ impl Expr {
             },
 
             _ => panic!("apply: not a function"),
+        }
+    }
+}
+
+impl From<&str> for Expr {
+    fn from(s: &str) -> Self {
+        match s.chars().nth(0) {
+            Some(':') => Expr::Symbol(Identifier::new(&s[1..])),
+            Some(_) => Expr::Variable(Identifier::new(s)),
+            _ => panic!("invalid identifier"),
         }
     }
 }
