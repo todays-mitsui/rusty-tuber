@@ -78,10 +78,9 @@ impl Expr {
             }
 
             Expr::Lambda { param, body } => {
-                if param == old {
-                    *param = new.clone();
+                if param != old {
+                    body.rename_var(old, new);
                 }
-                body.rename_var(old, new);
             }
         }
     }
@@ -114,7 +113,48 @@ mod tests {
     }
 
     #[test]
-    fn test_rename_var() {
-        // TODO
+    /// ラムダ抽象の中で束縛されている変数は置換されない
+    fn test_rename_var_1() {
+        let mut expr = Expr::l("x".into(), Expr::a("x".into(), "y".into()));
+        let expected = Expr::l("x".into(), Expr::a("x".into(), "y".into()));
+
+        expr.rename_var(&"x".into(), &"a".into());
+
+        assert_eq!(expr, expected);
+    }
+
+    #[test]
+    /// 置換はラムダ抽象の中にまで渡って再起的に行われる
+    fn test_rename_var_2() {
+        let mut expr = Expr::l("x".into(), Expr::a("x".into(), "y".into()));
+        let expected = Expr::l("x".into(), Expr::a("x".into(), "a".into()));
+
+        expr.rename_var(&"y".into(), &"a".into());
+
+        assert_eq!(expr, expected);
+    }
+
+    #[test]
+    /// 置換は左右の枝に渡って再起的に行われる
+    fn test_rename_var_3() {
+        let mut expr = Expr::a(Expr::a("x".into(), "y".into()), Expr::a("y".into(), "x".into()));
+        let expected = Expr::a(Expr::a("a".into(), "y".into()), Expr::a("y".into(), "a".into()));
+
+        expr.rename_var(&"x".into(), &"a".into());
+
+        assert_eq!(expr, expected);
+    }
+
+
+    #[test]
+    /// 変数とシンボルは区別される
+    /// :x が x によって置換されることはない
+    fn test_rename_var_4() {
+        let mut expr = Expr::a(Expr::a(":x".into(), "y".into()), Expr::a("y".into(), ":x".into()));
+        let expected = Expr::a(Expr::a(":x".into(), "y".into()), Expr::a("y".into(), ":x".into()));
+
+        expr.rename_var(&"x".into(), &"a".into());
+
+        assert_eq!(expr, expected);
     }
 }
