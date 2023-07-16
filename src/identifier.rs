@@ -30,3 +30,21 @@ impl From<&str> for Identifier {
         Identifier::new(s)
     }
 }
+
+#[test]
+fn test_new_name() {
+    let mut set: HashSet<Identifier> = HashSet::new();
+
+    set.insert("x".into());
+    set.insert("X".into());
+    set.insert("X0".into());
+    set.insert("X1".into());
+    set.insert("X2".into());
+    set.insert("X3".into());
+    set.insert("X4".into());
+    set.insert("X5".into());
+    set.insert("X7".into());
+
+    assert_eq!(Identifier::new("x").new_name(&set), Identifier::new("X6"));
+    assert_eq!(Identifier::new("y").new_name(&set), Identifier::new("Y"));
+}
