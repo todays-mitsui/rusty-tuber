@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use crate::expr::Identifier;
 use crate::func::Func;
+use crate::identifier::Identifier;
 
 pub struct Env {
     env: HashMap<Identifier, Func>,
@@ -54,8 +54,9 @@ impl From<Vec<(Identifier, Func)>> for Env {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{Expr, Identifier};
+    use crate::expr::Expr;
     use crate::func::Func;
+    use crate::identifier::Identifier;
 
     #[test]
     fn test_env_def() {

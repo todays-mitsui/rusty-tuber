@@ -16,26 +16,11 @@ where
 
 #[test]
 fn test_identifier() {
-    assert_eq!(
-        identifier().parse("abc"),
-        Ok((Identifier("a".to_string()), "bc"))
-    );
-    assert_eq!(
-        identifier().parse("ABC"),
-        Ok((Identifier("ABC".to_string()), ""))
-    );
-    assert_eq!(
-        identifier().parse("ABCabc"),
-        Ok((Identifier("ABC".to_string()), "abc"))
-    );
-    assert_eq!(
-        identifier().parse("A_B_C"),
-        Ok((Identifier("A_B_C".to_string()), ""))
-    );
-    assert_eq!(
-        identifier().parse("42"),
-        Ok((Identifier("42".to_string()), ""))
-    );
+    assert_eq!(identifier().parse("abc"), Ok(("a".into(), "bc")));
+    assert_eq!(identifier().parse("ABC"), Ok(("ABC".into(), "")));
+    assert_eq!(identifier().parse("ABCabc"), Ok(("ABC".into(), "abc")));
+    assert_eq!(identifier().parse("A_B_C"), Ok(("A_B_C".into(), "")));
+    assert_eq!(identifier().parse("42"), Ok(("42".into(), "")));
 
     assert!(identifier().parse(":abc").is_err());
     assert!(identifier().parse("^abc").is_err());
@@ -46,15 +31,12 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    lower().map(|c| Identifier(c.to_string()))
+    lower().map(|c| Identifier::new(&c.to_string()))
 }
 
 #[test]
 fn test_short_identifier() {
-    assert_eq!(
-        short_identifier().parse("a"),
-        Ok((Identifier("a".to_string()), ""))
-    );
+    assert_eq!(short_identifier().parse("a"), Ok(("a".into(), "")));
 
     assert!(short_identifier().parse("A").is_err());
 }
@@ -64,21 +46,15 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    many1(choice((digit(), upper(), char('_')))).map(Identifier)
+    many1(choice((digit(), upper(), char('_')))).map(|s: String| Identifier::new(&s))
 }
 
 #[test]
 fn test_long_identifier() {
     assert!(long_identifier().parse("abc").is_err());
 
-    assert_eq!(
-        long_identifier().parse("ABC"),
-        Ok((Identifier("ABC".to_string()), ""))
-    );
-    assert_eq!(
-        long_identifier().parse("ABCabc"),
-        Ok((Identifier("ABC".to_string()), "abc"))
-    );
+    assert_eq!(long_identifier().parse("ABC"), Ok(("ABC".into(), "")));
+    assert_eq!(long_identifier().parse("ABCabc"), Ok(("ABC".into(), "abc")));
 }
 
 // ========================================================================== //
@@ -116,7 +92,7 @@ fn test_expr() {
     assert_eq!(expr().easy_parse("a"), Ok((Expr::v("a"), "")));
     assert_eq!(
         expr().easy_parse("`ab"),
-        Ok((Expr::a(Expr::v("a"), Expr::v("b")), ""))
+        Ok((Expr::a("a".into(), "b".into()), ""))
     );
 }
 
@@ -135,8 +111,8 @@ fn test_var() {
     assert!(var().parse(":abc").is_err());
     assert!(var().parse("^abc").is_err());
 
-    assert_eq!(var().parse("abc"), Ok((Expr::v("a"), "bc")));
-    assert_eq!(var().parse("ABCabc"), Ok((Expr::v("ABC"), "abc")));
+    assert_eq!(var().parse("abc"), Ok(("a".into(), "bc")));
+    assert_eq!(var().parse("ABCabc"), Ok(("ABC".into(), "abc")));
 }
 
 // ========================================================================== //
@@ -153,8 +129,8 @@ where
 fn test_symbol() {
     assert!(symbol().parse("abc").is_err());
 
-    assert_eq!(symbol().parse(":abc"), Ok((Expr::s("a"), "bc")));
-    assert_eq!(symbol().parse(":ABCabc"), Ok((Expr::s("ABC"), "abc")));
+    assert_eq!(symbol().parse(":abc"), Ok((":a".into(), "bc")));
+    assert_eq!(symbol().parse(":ABCabc"), Ok((":ABC".into(), "abc")));
 }
 
 // ========================================================================== //
@@ -184,29 +160,23 @@ fn test_apply() {
 
     assert_eq!(
         expr().easy_parse("`ab"),
-        Ok((Expr::a(Expr::v("a"), Expr::v("b")), ""))
+        Ok((Expr::a("a".into(), "b".into()), ""))
     );
     assert_eq!(
         expr().easy_parse(" ` a b"),
-        Ok((Expr::a(Expr::v("a"), Expr::v("b")), ""))
+        Ok((Expr::a("a".into(), "b".into()), ""))
     );
     assert_eq!(
         expr().easy_parse("``abc"),
-        Ok((
-            Expr::a(Expr::a(Expr::v("a"), Expr::v("b")), Expr::v("c")),
-            ""
-        ))
+        Ok((Expr::a(Expr::a("a".into(), "b".into()), "c".into()), ""))
     );
     assert_eq!(
         expr().easy_parse(" ` ` a b c"),
-        Ok((
-            Expr::a(Expr::a(Expr::v("a"), Expr::v("b")), Expr::v("c")),
-            ""
-        ))
+        Ok((Expr::a(Expr::a("a".into(), "b".into()), "c".into()), ""))
     );
     assert_eq!(
         expr().easy_parse("`FOO BAR"),
-        Ok((Expr::a(Expr::v("FOO"), Expr::v("BAR")), ""))
+        Ok((Expr::a("FOO".into(), "BAR".into()), ""))
     );
 }
 
@@ -238,30 +208,18 @@ fn test_lambda() {
 
     assert_eq!(
         expr().easy_parse("^a.b"),
-        Ok((Expr::l(Identifier("a".to_string()), Expr::v("b")), ""))
+        Ok((Expr::l("a".into(), "b".into()), ""))
     );
     assert_eq!(
         expr().easy_parse(" ^ a . b"),
-        Ok((Expr::l(Identifier("a".to_string()), Expr::v("b")), ""))
+        Ok((Expr::l("a".into(), "b".into()), ""))
     );
     assert_eq!(
         expr().easy_parse("^a.^b.c"),
-        Ok((
-            Expr::l(
-                Identifier("a".to_string()),
-                Expr::l(Identifier("b".to_string()), Expr::v("c"))
-            ),
-            ""
-        ))
+        Ok((Expr::l("a".into(), Expr::l("b".into(), "c".into())), ""))
     );
     assert_eq!(
         expr().easy_parse(" ^ a . ^ b . c"),
-        Ok((
-            Expr::l(
-                Identifier("a".to_string()),
-                Expr::l(Identifier("b".to_string()), Expr::v("c"))
-            ),
-            ""
-        ))
+        Ok((Expr::l("a".into(), Expr::l("b".into(), "c".into())), ""))
     );
 }

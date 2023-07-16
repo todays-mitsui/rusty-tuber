@@ -1,4 +1,5 @@
-use crate::expr::{Expr, Identifier};
+use crate::expr::Expr;
+use crate::identifier::Identifier;
 
 #[derive(Debug, PartialEq)]
 pub struct Func {

@@ -1,42 +1,9 @@
-pub mod free_vars;
+mod free_vars;
 pub mod parser;
-
-use std::collections::HashSet;
+mod substitute;
 
 use crate::env::Env;
-use crate::expr::free_vars::FreeVars;
-
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct Identifier(String);
-
-impl Identifier {
-    pub fn new(s: &str) -> Identifier {
-        Identifier(String::from(s))
-    }
-
-    pub fn new_name(&self, vars: &HashSet<Identifier>) -> Identifier {
-        let mut name = self.0.to_uppercase();
-
-        if !vars.contains(&Identifier(name.clone())) {
-            return Identifier(name);
-        }
-
-        let mut i = 0;
-        while vars.contains(&Identifier(name.clone())) {
-            name = format!("{}{}", self.0.to_uppercase(), i);
-            i += 1;
-        }
-        Identifier(name)
-    }
-}
-
-impl From<&str> for Identifier {
-    fn from(s: &str) -> Self {
-        Identifier::new(s)
-    }
-}
-
-// ========================================================================== //
+use crate::identifier::Identifier;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
@@ -55,11 +22,11 @@ impl Expr {
     }
 
     pub fn v(label: &str) -> Expr {
-        Expr::Variable(Identifier(String::from(label)))
+        Expr::Variable(Identifier::new(label))
     }
 
     pub fn s(label: &str) -> Expr {
-        Expr::Symbol(Identifier(String::from(label)))
+        Expr::Symbol(Identifier::new(label))
     }
 
     pub fn a(lhs: Expr, rhs: Expr) -> Expr {
@@ -73,83 +40,6 @@ impl Expr {
         Expr::Lambda {
             param,
             body: Box::new(body),
-        }
-    }
-
-    pub fn substitute(self, param: &Identifier, arg: &Expr) -> Expr {
-        let mut vars = HashSet::new();
-        self.substitute_impl(param, arg, &arg.free_vars(), &mut vars)
-    }
-
-    fn substitute_impl(
-        self,
-        param: &Identifier,
-        arg: &Expr,
-        free_vars: &FreeVars,
-        bound_vars: &mut HashSet<Identifier>,
-    ) -> Expr {
-        match self {
-            Expr::Variable(id) => {
-                if &id == param {
-                    arg.clone()
-                } else {
-                    Expr::Variable(id)
-                }
-            }
-
-            Expr::Symbol(_) => self,
-
-            Expr::Apply { lhs, rhs } => Expr::Apply {
-                lhs: Box::new(lhs.substitute_impl(param, arg, free_vars, &mut bound_vars.clone())),
-                rhs: Box::new(rhs.substitute_impl(param, arg, free_vars, &mut bound_vars.clone())),
-            },
-
-            Expr::Lambda { param: p, body } => {
-                if &p == param {
-                    Expr::Lambda { param: p, body }
-                } else if free_vars.contains(&p) {
-                    let new_param: Identifier = p.new_name(bound_vars);
-                    bound_vars.insert(new_param.clone());
-
-                    let mut new_body = body.clone();
-                    new_body.rename_var(&p, &new_param);
-
-                    Expr::Lambda {
-                        param: new_param,
-                        body: Box::new(new_body.substitute_impl(param, arg, free_vars, bound_vars)),
-                    }
-                } else {
-                    bound_vars.insert(p.clone());
-                    Expr::Lambda {
-                        param: p,
-                        body: Box::new(body.substitute_impl(param, arg, free_vars, bound_vars)),
-                    }
-                }
-            }
-        }
-    }
-
-    fn rename_var(&mut self, old: &Identifier, new: &Identifier) {
-        match self {
-            Expr::Variable(id) => {
-                if id == old {
-                    *id = new.clone();
-                }
-            }
-
-            Expr::Symbol(_) => {}
-
-            Expr::Apply { lhs, rhs } => {
-                lhs.rename_var(old, new);
-                rhs.rename_var(old, new);
-            }
-
-            Expr::Lambda { param, body } => {
-                if param == old {
-                    *param = new.clone();
-                }
-                body.rename_var(old, new);
-            }
         }
     }
 
@@ -184,32 +74,5 @@ impl From<&str> for Expr {
             Some(_) => Expr::Variable(Identifier::new(s)),
             _ => panic!("invalid identifier"),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_expr_substitute() {
-        // ^z.x [x := y] => ^z.y
-        assert_eq!(
-            Expr::l("z".into(), "x".into()).substitute(&"x".into(), &"y".into()),
-            Expr::l("z".into(), "y".into())
-        );
-
-        // ^Y.^y.`xY [x := y] => ^Y.^Y0.`yY
-        assert_eq!(
-            Expr::l(
-                "Y".into(),
-                Expr::l("y".into(), Expr::a("x".into(), "Y".into()))
-            )
-            .substitute(&"x".into(), &"y".into()),
-            Expr::l(
-                "Y".into(),
-                Expr::l("Y0".into(), Expr::a("y".into(), "Y".into()))
-            )
-        );
     }
 }
