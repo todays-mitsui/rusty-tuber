@@ -112,4 +112,9 @@ mod tests {
             )
         );
     }
+
+    #[test]
+    fn test_rename_var() {
+        // TODO
+    }
 }
