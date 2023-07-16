@@ -10,16 +10,16 @@ impl Expr {
         }
     }
 
-    pub fn apply(&self, env: &Env, args: Vec<Expr>) -> Expr {
+    pub fn apply(&self, env: &Env, args: Vec<Expr>) -> Option<Expr> {
         match self {
-            Expr::Lambda { param, body } => body.clone().substitute(&param, &args[0]),
+            Expr::Lambda { param, body } => Some(body.clone().substitute(&param, &args[0])),
 
             Expr::Variable(id) => match env.get(&id) {
-                Some(func) => func.apply(args),
-                None => panic!("apply: unknown function"),
+                Some(func) => Some(func.apply(args)),
+                None => None,
             },
 
-            _ => panic!("apply: not a function"),
+            _ => None,
         }
     }
 }

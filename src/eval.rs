@@ -10,8 +10,11 @@ pub struct EvalSteps {
 
 impl EvalSteps {
     pub fn new(expr: Expr, env: Env) -> EvalSteps {
-        let stack = Stack::new();
-        EvalSteps { expr, stack, env }
+        EvalSteps {
+            expr,
+            stack: Stack::new(),
+            env,
+        }
     }
 
     pub fn assemble(&self) -> Expr {
@@ -34,18 +37,14 @@ impl Iterator for EvalSteps {
             self.stack.push(*rhs);
         }
 
-        let maybe_arity = self.expr.arity(&self.env);
-
-        if maybe_arity.map(|a| a <= self.stack.len()).unwrap_or(false) {
-            let arity = maybe_arity.unwrap();
-            let args = self.stack.pop(arity);
-
-            self.expr = self.expr.apply(&self.env, args);
-
-            return Some(self.assemble());
-        }
-
-        return None;
+        self.expr
+            .arity(&self.env)
+            .and_then(|a| self.stack.pop(a))
+            .and_then(|args| self.expr.apply(&self.env, args))
+            .map(|expr| {
+                self.expr = expr;
+                self.assemble()
+            })
     }
 }
 
@@ -63,14 +62,14 @@ impl Stack {
         self.0.push(expr);
     }
 
-    fn pop(&mut self, n: usize) -> Vec<Expr> {
+    fn pop(&mut self, n: usize) -> Option<Vec<Expr>> {
         let length = self.len();
 
-        if length < n {
-            panic!("stack underflow");
+        if length >= n {
+            Some(self.0.drain(length - n..).rev().collect())
+        } else {
+            None
         }
-
-        self.0.drain(length - n..).rev().collect()
     }
 
     fn all(&self) -> Vec<Expr> {
@@ -233,19 +232,23 @@ mod tests {
 
         assert_eq!(stack.len(), 3);
 
-        assert_eq!(stack.pop(2), vec![Expr::v("z"), Expr::v("y")]);
+        assert_eq!(stack.pop(2), Some(vec!["z".into(), "y".into()]));
 
         assert_eq!(stack.len(), 1);
 
-        assert_eq!(stack.pop(1), vec![Expr::v("x")]);
+        assert_eq!(stack.pop(1), Some(vec!["x".into()]));
 
         assert_eq!(stack.len(), 0);
+
+        assert_eq!(stack.pop(1), None);
     }
 
     #[test]
     fn test_stack_all() {
         let stack = Stack(vec![Expr::v("x"), Expr::v("y"), Expr::v("z")]);
-
         assert_eq!(stack.all(), vec![Expr::v("z"), Expr::v("y"), Expr::v("x")]);
+
+        let stack0 = Stack(vec![]);
+        assert_eq!(stack0.all(), vec![]);
     }
 }
