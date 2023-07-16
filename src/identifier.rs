@@ -46,5 +46,6 @@ fn test_new_name() {
     set.insert("X7".into());
 
     assert_eq!(Identifier::new("x").new_name(&set), Identifier::new("X6"));
+    assert_eq!(Identifier::new("X").new_name(&set), Identifier::new("X6"));
     assert_eq!(Identifier::new("y").new_name(&set), Identifier::new("Y"));
 }
