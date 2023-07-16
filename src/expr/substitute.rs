@@ -8,6 +8,7 @@ impl Expr {
     ///
     /// 単純な置換だけでなく、ラムダ抽象の中で束縛されている束縛変数と自由変数の衝突を避けるため
     /// 束縛変数のリネームを行う
+    ///
     /// 具体例はテストコードを参照
     pub fn substitute(self, param: &Identifier, arg: &Expr) -> Expr {
         let mut vars = HashSet::new();
@@ -62,6 +63,7 @@ impl Expr {
         }
     }
 
+    /// 式の中の自由変数を別の識別子に置き換える
     fn rename_var(&mut self, old: &Identifier, new: &Identifier) {
         match self {
             Expr::Variable(id) => {
@@ -81,6 +83,9 @@ impl Expr {
                 if param != old {
                     body.rename_var(old, new);
                 }
+                // 自由変数としての old のみ new に置き換えたい
+                // old が束縛変数の識別子と一致する場合、そのラムダ抽象の中に自由変数としての old は
+                // 存在しないことが確定するので、その時点で再起を打ち切っていい
             }
         }
     }
