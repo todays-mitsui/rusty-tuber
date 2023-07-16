@@ -1,8 +1,8 @@
+mod apply;
 mod free_vars;
 pub mod parser;
 mod substitute;
 
-use crate::env::Env;
 use crate::identifier::Identifier;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -14,13 +14,6 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn destruct_apply(self) -> (Expr, Expr) {
-        match self {
-            Expr::Apply { lhs, rhs } => (*lhs, *rhs),
-            _ => panic!("destruct_apply: not an apply"),
-        }
-    }
-
     pub fn v(label: &str) -> Expr {
         Expr::Variable(Identifier::new(label))
     }
@@ -40,29 +33,6 @@ impl Expr {
         Expr::Lambda {
             param,
             body: Box::new(body),
-        }
-    }
-
-    pub fn arity(&self, env: &Env) -> Option<usize> {
-        match self {
-            Expr::Lambda { .. } => Some(1),
-            Expr::Variable(id) => env.arity(id),
-            _ => None,
-        }
-    }
-}
-
-impl Expr {
-    pub fn apply(&self, env: &Env, args: Vec<Expr>) -> Expr {
-        match self {
-            Expr::Lambda { param, body } => body.clone().substitute(&param, &args[0]),
-
-            Expr::Variable(id) => match env.get(&id) {
-                Some(func) => func.apply(args),
-                None => panic!("apply: not found"),
-            },
-
-            _ => panic!("apply: not a function"),
         }
     }
 }
