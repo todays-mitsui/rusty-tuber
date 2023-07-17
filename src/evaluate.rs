@@ -2,14 +2,14 @@ use crate::environment::Env;
 use crate::expression::Expr;
 use crate::expression::Expr::*;
 
-pub struct EvalSteps {
+pub struct EvalSteps<'a> {
     expr: Expr,
     stack: Stack,
-    env: Env,
+    env: &'a Env,
 }
 
-impl EvalSteps {
-    pub fn new(expr: Expr, env: Env) -> EvalSteps {
+impl EvalSteps<'_> {
+    pub fn new(expr: Expr, env: &Env) -> EvalSteps {
         EvalSteps {
             expr,
             stack: Stack::new(),
@@ -28,7 +28,7 @@ impl EvalSteps {
     }
 }
 
-impl Iterator for EvalSteps {
+impl Iterator for EvalSteps<'_> {
     type Item = Expr;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -106,10 +106,12 @@ mod tests {
 
     #[test]
     fn test_eval_steps_lambda_i() {
+        let env = Env::new();
+
         let i = Expr::l("x".into(), "x".into());
         let expr = Expr::a(i, ":a".into());
 
-        let mut steps = EvalSteps::new(expr, Env::new());
+        let mut steps = EvalSteps::new(expr, &env);
 
         assert_eq!(steps.next(), Some(":a".into()));
         assert_eq!(steps.next(), None);
@@ -117,10 +119,12 @@ mod tests {
 
     #[test]
     fn test_eval_steps_lambda_k_1() {
+        let env = Env::new();
+
         let k = Expr::l("x".into(), Expr::l("y".into(), "x".into()));
         let expr = Expr::a(k, ":a".into());
 
-        let mut steps = EvalSteps::new(expr, Env::new());
+        let mut steps = EvalSteps::new(expr, &env);
 
         assert_eq!(steps.next(), Some(Expr::l("y".into(), ":a".into())));
         assert_eq!(steps.next(), None);
@@ -128,10 +132,12 @@ mod tests {
 
     #[test]
     fn test_eval_steps_lambda_k_2() {
+        let env = Env::new();
+
         let k = Expr::l("x".into(), Expr::l("y".into(), "x".into()));
         let expr = Expr::a(Expr::a(k, ":a".into()), ":b".into());
 
-        let mut steps = EvalSteps::new(expr, Env::new());
+        let mut steps = EvalSteps::new(expr, &env);
 
         assert_eq!(
             steps.next(),
@@ -147,7 +153,7 @@ mod tests {
 
         let expr = Expr::a("i".into(), ":a".into());
 
-        let mut steps = EvalSteps::new(expr, env);
+        let mut steps = EvalSteps::new(expr, &env);
 
         assert_eq!(steps.next(), Some(":a".into()));
         assert_eq!(steps.next(), None);
@@ -159,7 +165,7 @@ mod tests {
 
         let expr = Expr::a("k".into(), ":a".into());
 
-        let mut steps = EvalSteps::new(expr, env);
+        let mut steps = EvalSteps::new(expr, &env);
 
         // k の arity が2なのに対して引数を1つしか与えていないので簡約されない
         assert_eq!(steps.next(), None);
@@ -171,7 +177,7 @@ mod tests {
 
         let expr = Expr::a(Expr::a("k".into(), ":a".into()), ":b".into());
 
-        let mut steps = EvalSteps::new(expr, env);
+        let mut steps = EvalSteps::new(expr, &env);
 
         assert_eq!(steps.next(), Some(":a".into()));
         assert_eq!(steps.next(), None);
@@ -183,7 +189,7 @@ mod tests {
 
         let expr = Expr::a("s".into(), ":a".into());
 
-        let mut steps = EvalSteps::new(expr, env);
+        let mut steps = EvalSteps::new(expr, &env);
 
         // s の arity が3なのに対して引数を1つしか与えていないので簡約されない
         assert_eq!(steps.next(), None);
@@ -195,7 +201,7 @@ mod tests {
 
         let expr = Expr::a(Expr::a("s".into(), ":a".into()), ":b".into());
 
-        let mut steps = EvalSteps::new(expr, env);
+        let mut steps = EvalSteps::new(expr, &env);
 
         // s の arity が3なのに対して引数を2つしか与えていないので簡約されない
         assert_eq!(steps.next(), None);
@@ -210,7 +216,7 @@ mod tests {
             ":c".into(),
         );
 
-        let mut steps = EvalSteps::new(expr, env);
+        let mut steps = EvalSteps::new(expr, &env);
 
         assert_eq!(
             steps.next(),
