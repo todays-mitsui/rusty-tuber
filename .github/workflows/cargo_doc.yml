@@ -2,22 +2,25 @@ name: Doc
 
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - master
   pull_request:
-    branches: [ "master" ]
+    branches:
+      - master
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
     - name: Create doc
       run: cargo doc --no-deps
     - name: Upload doc
-      uses: actions/upload-pages-artifact@v2
+      uses: actions/upload-pages-artifact@v1
       with:
         path: target/doc
 
@@ -30,8 +33,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Release doc
       id: deployment
-      uses: actions/deploy-pages@v1
+      uses: actions/deploy-pages@v2
