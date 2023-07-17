@@ -10,7 +10,7 @@ impl Expr {
         }
     }
 
-    /// TODO: Option<T> ではなく Result<T, E> を返すのが適切かも
+    /// TODO: `Option<T>` ではなく `Result<T, E>` を返すのが適切かも
     pub fn apply(&self, env: &Env, args: Vec<Expr>) -> Option<Expr> {
         match self {
             Expr::Lambda { param, body } => Some(body.clone().substitute(&param, &args[0])),

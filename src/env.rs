@@ -3,6 +3,9 @@ use std::collections::HashMap;
 use crate::func::Func;
 use crate::identifier::Identifier;
 
+/// 定義済みの名前空間を表現する
+///
+/// 識別子と関数の組を保持する
 pub struct Env {
     env: HashMap<Identifier, Func>,
 }

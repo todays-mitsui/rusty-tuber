@@ -7,21 +7,31 @@ use crate::identifier::Identifier;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
+    /// 変数
     Variable(Identifier),
+
+    /// シンボル
     Symbol(Identifier),
+
+    /// 適用
     Apply { lhs: Box<Expr>, rhs: Box<Expr> },
+
+    /// ラムダ抽象
     Lambda { param: Identifier, body: Box<Expr> },
 }
 
 impl Expr {
+    /// 変数を作る
     pub fn v(label: &str) -> Expr {
         Expr::Variable(Identifier::new(label))
     }
 
+    /// シンボルを作る
     pub fn s(label: &str) -> Expr {
         Expr::Symbol(Identifier::new(label))
     }
 
+    /// 適用を作る
     pub fn a(lhs: Expr, rhs: Expr) -> Expr {
         Expr::Apply {
             lhs: Box::new(lhs),
@@ -29,6 +39,7 @@ impl Expr {
         }
     }
 
+    /// ラムダ抽象を作る
     pub fn l(param: Identifier, body: Expr) -> Expr {
         Expr::Lambda {
             param,

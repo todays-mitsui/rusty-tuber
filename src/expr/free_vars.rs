@@ -24,6 +24,7 @@ impl From<HashSet<Identifier>> for FreeVars {
 }
 
 impl Expr {
+    /// 式の中に現れる自由変数の集合を取得する
     pub fn free_vars(&self) -> FreeVars {
         let mut vars = HashSet::new();
         self.free_vars_impl(&mut vars);

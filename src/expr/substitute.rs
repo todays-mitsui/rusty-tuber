@@ -6,10 +6,41 @@ use crate::expr::free_vars::FreeVars;
 impl Expr {
     /// 指定した識別子を別の式で置き換えた新しい式を得る
     ///
-    /// 単純な置換だけでなく、ラムダ抽象の中で束縛されている束縛変数と自由変数の衝突を避けるため
-    /// 束縛変数のリネームを行う
+    /// ラムダ抽象の中で束縛されている束縛変数と自由変数の衝突を避けるため
+    /// 束縛変数のリネームを行うことがある (α変換)
     ///
-    /// 具体例はテストコードを参照
+    /// ```
+    /// # use rusty_tuber::identifier::Identifier;
+    /// # use rusty_tuber::expr::Expr;
+    /// // ^y.`xy [x := y]
+    /// let expr = Expr::l(
+    ///     Identifier::from("y"),
+    ///     Expr::a(Expr::v("x"), Expr::v("y"))
+    /// );
+    /// let param = Identifier::from("x");
+    /// let arg = Expr::v("y");
+    ///
+    /// // 単純に x を y に置換した結果にはならない
+    /// // そのようにしてしまうと自由変数としての y と束縛変数としての y の区別がつかなくなってしまう
+    /// assert_ne!(
+    ///     expr.clone().substitute(&param, &arg),
+    ///     // ^y.`yy
+    ///     Expr::l(
+    ///         Identifier::from("y"),
+    ///         Expr::a("y".into(), "y".into())
+    ///     )
+    /// );
+    ///
+    /// // ^y.`xy [x := y] を ^Y.`xY [x := y] に変換することで自由変数と束縛変数の衝突を避ける
+    /// assert_eq!(
+    ///     expr.clone().substitute(&param, &arg),
+    ///     // ^Y.`xY
+    ///     Expr::l(
+    ///         Identifier::from("Y"),
+    ///         Expr::a("y".into(), "Y".into())
+    ///     )
+    /// );
+    /// ```
     pub fn substitute(self, param: &Identifier, arg: &Expr) -> Expr {
         let mut vars = HashSet::new();
         self.substitute_impl(param, arg, &arg.free_vars(), &mut vars)
