@@ -20,7 +20,7 @@ jobs:
     - name: Create doc
       run: cargo doc --no-deps
     - name: Upload doc
-      uses: actions/upload-pages-artifact@v1
+      uses: actions/upload-pages-artifact@v2
       with:
         path: target/doc
 
@@ -32,7 +32,7 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.url }}
     runs-on: ubuntu-22.04
     steps:
     - name: Release doc
