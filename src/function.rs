@@ -48,11 +48,7 @@ pub fn k() -> Func {
 
 pub fn s() -> Func {
     Func {
-        params: vec![
-            Ident::new("x"),
-            Ident::new("y"),
-            Ident::new("z"),
-        ],
+        params: vec![Ident::new("x"), Ident::new("y"), Ident::new("z")],
         body: Expr::a(
             Expr::a(Expr::v("x"), Expr::v("z")),
             Expr::a(Expr::v("y"), Expr::v("z")),

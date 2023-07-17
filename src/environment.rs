@@ -78,19 +78,12 @@ mod tests {
         );
         env.def(
             Ident::new("K"),
-            Func::new(
-                vec![Ident::new("x"), Ident::new("y")],
-                Expr::v("x"),
-            ),
+            Func::new(vec![Ident::new("x"), Ident::new("y")], Expr::v("x")),
         );
         env.def(
             Ident::new("S"),
             Func::new(
-                vec![
-                    Ident::new("x"),
-                    Ident::new("y"),
-                    Ident::new("z"),
-                ],
+                vec![Ident::new("x"), Ident::new("y"), Ident::new("z")],
                 Expr::a(
                     Expr::a(Expr::v("x"), Expr::v("z")),
                     Expr::a(Expr::v("y"), Expr::v("z")),
@@ -112,16 +105,9 @@ mod tests {
     #[test]
     fn test_env_from() {
         let i: Func = Func::new(vec![Ident::new("x")], Expr::v("x"));
-        let k: Func = Func::new(
-            vec![Ident::new("x"), Ident::new("y")],
-            Expr::v("x"),
-        );
+        let k: Func = Func::new(vec![Ident::new("x"), Ident::new("y")], Expr::v("x"));
         let s: Func = Func::new(
-            vec![
-                Ident::new("x"),
-                Ident::new("y"),
-                Ident::new("z"),
-            ],
+            vec![Ident::new("x"), Ident::new("y"), Ident::new("z")],
             Expr::a(
                 Expr::a(Expr::v("x"), Expr::v("z")),
                 Expr::a(Expr::v("y"), Expr::v("z")),

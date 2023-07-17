@@ -6,6 +6,14 @@ pub struct EvalSteps<'a> {
     expr: Expr,
     stack: Stack,
     env: &'a Env,
+    status: Status,
+    rightIters: Vec<EvalSteps<'a>>,
+}
+
+enum Status {
+    LeftTree,
+    RightTree(usize),
+    Done,
 }
 
 impl EvalSteps<'_> {
@@ -14,6 +22,8 @@ impl EvalSteps<'_> {
             expr,
             stack: Stack::new(),
             env,
+            status: Status::LeftTree,
+            rightIters: Vec::new(),
         }
     }
 
@@ -32,19 +42,55 @@ impl Iterator for EvalSteps<'_> {
     type Item = Expr;
 
     fn next(&mut self) -> Option<Self::Item> {
+        match self.status {
+            Status::LeftTree => self.leftTree(),
+            Status::RightTree(n) => self.rightTree(n),
+            Status::Done => None,
+        }
+    }
+}
+
+impl EvalSteps<'_> {
+    fn leftTree(&mut self) -> Option<Expr> {
         while let Apply { lhs, rhs } = self.expr.clone() {
             self.expr = *lhs;
             self.stack.push(*rhs);
         }
 
-        self.expr
+        let maybe_next = self
+            .expr
             .arity(&self.env)
             .and_then(|a| self.stack.pop(a))
             .and_then(|args| self.expr.apply(&self.env, args))
             .map(|expr| {
                 self.expr = expr;
                 self.assemble()
-            })
+            });
+
+        match maybe_next {
+            Some(expr) => Some(expr),
+
+            None => {
+                self.status = Status::RightTree(0);
+                self.rightIters = self
+                    .stack
+                    .all()
+                    .iter()
+                    .map(|arg| EvalSteps::new(arg.clone(), self.env))
+                    .collect();
+                self.next()
+            },
+        }
+    }
+
+    fn rightTree(&mut self, n: usize) -> Option<Expr> {
+        if self.rightIters.len() < n {
+            self.status = Status::Done;
+            self.next()
+        } else {
+            self.status = Status::RightTree(n + 1);
+            self.next()
+        }
     }
 }
 
@@ -80,6 +126,16 @@ impl Stack {
 
     fn len(&self) -> usize {
         self.0.len()
+    }
+}
+
+impl From<Stack> for Vec<EvalSteps> {
+    fn from(stack: Stack) -> Self {
+        stack
+            .0
+            .into_iter()
+            .map(|expr| EvalSteps::new(expr, &Env::new()))
+            .collect()
     }
 }
 

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use crate::identifier::Ident;
 use crate::expression::Expr;
+use crate::identifier::Ident;
 
 type FreeVars = HashSet<Ident>;
 type BoundVars = HashSet<Ident>;
@@ -156,7 +156,6 @@ impl Expr {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -208,21 +207,32 @@ mod tests {
     #[test]
     /// 置換は左右の枝に渡って再起的に行われる
     fn test_rename_var_3() {
-        let mut expr = Expr::a(Expr::a("x".into(), "y".into()), Expr::a("y".into(), "x".into()));
-        let expected = Expr::a(Expr::a("a".into(), "y".into()), Expr::a("y".into(), "a".into()));
+        let mut expr = Expr::a(
+            Expr::a("x".into(), "y".into()),
+            Expr::a("y".into(), "x".into()),
+        );
+        let expected = Expr::a(
+            Expr::a("a".into(), "y".into()),
+            Expr::a("y".into(), "a".into()),
+        );
 
         expr.rename_var(&"x".into(), &"a".into());
 
         assert_eq!(expr, expected);
     }
 
-
     #[test]
     /// 変数とシンボルは区別される
     /// :x が x によって置換されることはない
     fn test_rename_var_4() {
-        let mut expr = Expr::a(Expr::a(":x".into(), "y".into()), Expr::a("y".into(), ":x".into()));
-        let expected = Expr::a(Expr::a(":x".into(), "y".into()), Expr::a("y".into(), ":x".into()));
+        let mut expr = Expr::a(
+            Expr::a(":x".into(), "y".into()),
+            Expr::a("y".into(), ":x".into()),
+        );
+        let expected = Expr::a(
+            Expr::a(":x".into(), "y".into()),
+            Expr::a("y".into(), ":x".into()),
+        );
 
         expr.rename_var(&"x".into(), &"a".into());
 

@@ -37,7 +37,12 @@ mod tests {
         let f2 = Func::new(vec!["x".into(), "y".into()], ":a".into());
         let f3 = Func::new(vec!["x".into(), "y".into(), "z".into()], ":a".into());
 
-        let env = Env::from(vec![("f0".into(), f0), ("f1".into(), f1), ("f2".into(), f2), ("f3".into(), f3)]);
+        let env = Env::from(vec![
+            ("f0".into(), f0),
+            ("f1".into(), f1),
+            ("f2".into(), f2),
+            ("f3".into(), f3),
+        ]);
 
         // シンボルは関数が紐づくことがない、arity は定義されない
         assert_eq!(Expr::s("a").arity(&env), None);
