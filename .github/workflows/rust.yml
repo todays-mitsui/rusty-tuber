@@ -34,7 +34,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: Create doc
       run: cargo doc --no-deps
-    - run: echo "<meta http-equiv=\"refresh\" content=\"0; url=rusty_tuber\">" > target/doc/index.html
+    - run: echo "<meta http-equiv=\"refresh\" content=\"0; url=tuber\">" > target/doc/index.html
     - name: Setup Pages
       uses: actions/configure-pages@v3
     - name: Upload doc
