@@ -13,8 +13,8 @@ impl Expr {
     /// 束縛変数のリネームを行うことがある (α変換)
     ///
     /// ```
-    /// # use rusty_tuber::identifier::Ident;
-    /// # use rusty_tuber::expression::Expr;
+    /// # use tuber::identifier::Ident;
+    /// # use tuber::expression::Expr;
     /// // ^y.`xy [x := y]
     /// let expr = Expr::l(
     ///     Ident::from("y"),
