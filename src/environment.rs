@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::function::Func;
+use crate::function::{i, k, s};
 use crate::identifier::Ident;
 
 /// 定義済みの名前空間を表現する
@@ -40,7 +41,11 @@ impl Env {
 
 impl Default for Env {
     fn default() -> Self {
-        Env::new()
+        Env::from(vec![
+            (Ident::new("i"), i()),
+            (Ident::new("k"), k()),
+            (Ident::new("s"), s()),
+        ])
     }
 }
 

@@ -1,6 +1,9 @@
 use crate::expression::Expr;
 use crate::identifier::Ident;
 
+/// 定義済み関数を表現する
+///
+/// 関数とラムダ抽象はよく似ているが、関数が 0 以上の arity を持つ点で異なる
 #[derive(Debug, PartialEq)]
 pub struct Func {
     params: Vec<Ident>,
@@ -12,19 +15,14 @@ impl Func {
         Func { params, body }
     }
 
-    // copilot が勝手に生成した、怖っ
-    // pub fn apply(&self, args: Vec<Expr>) -> Expr {
-    //     let mut body = self.body.clone();
-    //     for (param, arg) in self.params.iter().zip(args) {
-    //         body = body.substitute(param, &arg);
-    //     }
-    //     body
-    // }
-
+    /// 関数の引数の個数
+    ///
+    /// 0 以上の整数値を返す
     pub fn arity(&self) -> usize {
         self.params.len()
     }
 
+    /// 関数に引数を与え評価した結果を返す
     pub fn apply(&self, args: Vec<Expr>) -> Expr {
         let mut body = self.body.clone();
         for (param, arg) in self.params.iter().zip(args) {
