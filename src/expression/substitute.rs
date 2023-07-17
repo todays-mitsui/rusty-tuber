@@ -1,7 +1,10 @@
 use std::collections::HashSet;
 
-use super::{Expr, Identifier};
-use crate::expr::free_vars::FreeVars;
+use crate::identifier::Identifier;
+use crate::expression::Expr;
+
+type FreeVars = HashSet<Identifier>;
+type BoundVars = HashSet<Identifier>;
 
 impl Expr {
     /// 指定した識別子を別の式で置き換えた新しい式を得る
@@ -11,7 +14,7 @@ impl Expr {
     ///
     /// ```
     /// # use rusty_tuber::identifier::Identifier;
-    /// # use rusty_tuber::expr::Expr;
+    /// # use rusty_tuber::expression::Expr;
     /// // ^y.`xy [x := y]
     /// let expr = Expr::l(
     ///     Identifier::from("y"),
@@ -42,7 +45,7 @@ impl Expr {
     /// );
     /// ```
     pub fn substitute(self, param: &Identifier, arg: &Expr) -> Expr {
-        let mut vars = HashSet::new();
+        let mut vars: FreeVars = HashSet::new();
         self.substitute_impl(param, arg, &arg.free_vars(), &mut vars)
     }
 
@@ -51,7 +54,7 @@ impl Expr {
         param: &Identifier,
         arg: &Expr,
         free_vars: &FreeVars,
-        bound_vars: &mut HashSet<Identifier>,
+        bound_vars: &mut BoundVars,
     ) -> Expr {
         match self {
             Expr::Variable(id) => {
@@ -121,6 +124,38 @@ impl Expr {
         }
     }
 }
+
+impl Expr {
+    /// 式の中に現れる自由変数の集合を取得する
+    fn free_vars(&self) -> FreeVars {
+        let mut vars: FreeVars = HashSet::new();
+        self.free_vars_impl(&mut vars);
+        vars
+    }
+
+    fn free_vars_impl(&self, vars: &mut FreeVars) {
+        match self {
+            Expr::Variable(id) => {
+                vars.insert(id.clone());
+            }
+            Expr::Symbol(_) => {}
+            Expr::Apply { lhs, rhs } => {
+                lhs.free_vars_impl(vars);
+                rhs.free_vars_impl(vars);
+            }
+            Expr::Lambda { param, body } => {
+                let mut body_vars = HashSet::new();
+                body.free_vars_impl(&mut body_vars);
+                for var in body_vars {
+                    if &var != param {
+                        vars.insert(var);
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {

@@ -4,7 +4,7 @@ use combine::parser::choice::choice;
 use combine::EasyParser;
 use combine::{many1, parser, ParseError, Parser, Stream};
 
-use crate::expr::{Expr, Identifier};
+use crate::expression::{Expr, Identifier};
 
 fn identifier<Input>() -> impl Parser<Input, Output = Identifier>
 where

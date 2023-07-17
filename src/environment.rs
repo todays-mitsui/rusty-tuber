@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::func::Func;
+use crate::function::Func;
 use crate::identifier::Identifier;
 
 /// 定義済みの名前空間を表現する
@@ -57,8 +57,8 @@ impl From<Vec<(Identifier, Func)>> for Env {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::Expr;
-    use crate::func::Func;
+    use crate::expression::Expr;
+    use crate::function::Func;
     use crate::identifier::Identifier;
 
     #[test]

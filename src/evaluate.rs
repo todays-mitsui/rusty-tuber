@@ -1,6 +1,6 @@
-use crate::env::Env;
-use crate::expr::Expr;
-use crate::expr::Expr::*;
+use crate::environment::Env;
+use crate::expression::Expr;
+use crate::expression::Expr::*;
 
 pub struct EvalSteps {
     expr: Expr,
@@ -88,7 +88,7 @@ impl Stack {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::func::Func;
+    use crate::function::Func;
 
     fn setup() -> Env {
         let i = Func::new(vec!["x".into()], "x".into());

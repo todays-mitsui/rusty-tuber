@@ -1,5 +1,5 @@
 use super::Expr;
-use crate::env::Env;
+use crate::environment::Env;
 
 impl Expr {
     pub fn arity(&self, env: &Env) -> Option<usize> {
@@ -28,7 +28,7 @@ impl Expr {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::func::Func;
+    use crate::function::Func;
 
     #[test]
     fn test_arity() {

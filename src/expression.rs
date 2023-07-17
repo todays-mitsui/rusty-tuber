@@ -1,5 +1,4 @@
 mod apply;
-mod free_vars;
 pub mod parser;
 mod substitute;
 

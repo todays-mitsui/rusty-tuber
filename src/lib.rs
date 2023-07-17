@@ -1,5 +1,5 @@
-pub mod env;
-pub mod eval;
-pub mod expr;
-pub mod func;
+pub mod environment;
+pub mod evaluate;
+pub mod expression;
+pub mod function;
 pub mod identifier;
