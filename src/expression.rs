@@ -2,32 +2,32 @@ mod apply;
 pub mod parser;
 mod substitute;
 
-use crate::identifier::Identifier;
+use crate::identifier::Ident;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
     /// 変数
-    Variable(Identifier),
+    Variable(Ident),
 
     /// シンボル
-    Symbol(Identifier),
+    Symbol(Ident),
 
     /// 適用
     Apply { lhs: Box<Expr>, rhs: Box<Expr> },
 
     /// ラムダ抽象
-    Lambda { param: Identifier, body: Box<Expr> },
+    Lambda { param: Ident, body: Box<Expr> },
 }
 
 impl Expr {
     /// 変数を作る
     pub fn v(label: &str) -> Expr {
-        Expr::Variable(Identifier::new(label))
+        Expr::Variable(Ident::new(label))
     }
 
     /// シンボルを作る
     pub fn s(label: &str) -> Expr {
-        Expr::Symbol(Identifier::new(label))
+        Expr::Symbol(Ident::new(label))
     }
 
     /// 適用を作る
@@ -39,7 +39,7 @@ impl Expr {
     }
 
     /// ラムダ抽象を作る
-    pub fn l(param: Identifier, body: Expr) -> Expr {
+    pub fn l(param: Ident, body: Expr) -> Expr {
         Expr::Lambda {
             param,
             body: Box::new(body),
@@ -50,8 +50,8 @@ impl Expr {
 impl From<&str> for Expr {
     fn from(s: &str) -> Self {
         match s.chars().nth(0) {
-            Some(':') => Expr::Symbol(Identifier::new(&s[1..])),
-            Some(_) => Expr::Variable(Identifier::new(s)),
+            Some(':') => Expr::Symbol(Ident::new(&s[1..])),
+            Some(_) => Expr::Variable(Ident::new(s)),
             _ => panic!("invalid identifier"),
         }
     }

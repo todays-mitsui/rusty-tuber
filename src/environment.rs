@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use crate::function::Func;
-use crate::identifier::Identifier;
+use crate::identifier::Ident;
 
 /// 定義済みの名前空間を表現する
 ///
 /// 識別子と関数の組を保持する
 pub struct Env {
-    env: HashMap<Identifier, Func>,
+    env: HashMap<Ident, Func>,
 }
 
 impl Env {
@@ -17,19 +17,19 @@ impl Env {
         }
     }
 
-    pub fn def(&mut self, id: Identifier, func: Func) {
+    pub fn def(&mut self, id: Ident, func: Func) {
         self.env.insert(id, func);
     }
 
-    pub fn get(&self, id: &Identifier) -> Option<&Func> {
+    pub fn get(&self, id: &Ident) -> Option<&Func> {
         self.env.get(id)
     }
 
-    pub fn arity(&self, id: &Identifier) -> Option<usize> {
+    pub fn arity(&self, id: &Ident) -> Option<usize> {
         self.get(id).map(|f| f.arity())
     }
 
-    pub fn del(&mut self, id: &Identifier) {
+    pub fn del(&mut self, id: &Ident) {
         self.env.remove(id);
     }
 
@@ -44,8 +44,8 @@ impl Default for Env {
     }
 }
 
-impl From<Vec<(Identifier, Func)>> for Env {
-    fn from(v: Vec<(Identifier, Func)>) -> Self {
+impl From<Vec<(Ident, Func)>> for Env {
+    fn from(v: Vec<(Ident, Func)>) -> Self {
         let mut env = Env::new();
         for (id, func) in v {
             env.def(id, func);
@@ -59,7 +59,7 @@ mod tests {
     use super::*;
     use crate::expression::Expr;
     use crate::function::Func;
-    use crate::identifier::Identifier;
+    use crate::identifier::Ident;
 
     #[test]
     fn test_env_def() {
@@ -68,23 +68,23 @@ mod tests {
         assert_eq!(env.count(), 0);
 
         env.def(
-            Identifier::new("I"),
-            Func::new(vec![Identifier::new("x")], Expr::v("x")),
+            Ident::new("I"),
+            Func::new(vec![Ident::new("x")], Expr::v("x")),
         );
         env.def(
-            Identifier::new("K"),
+            Ident::new("K"),
             Func::new(
-                vec![Identifier::new("x"), Identifier::new("y")],
+                vec![Ident::new("x"), Ident::new("y")],
                 Expr::v("x"),
             ),
         );
         env.def(
-            Identifier::new("S"),
+            Ident::new("S"),
             Func::new(
                 vec![
-                    Identifier::new("x"),
-                    Identifier::new("y"),
-                    Identifier::new("z"),
+                    Ident::new("x"),
+                    Ident::new("y"),
+                    Ident::new("z"),
                 ],
                 Expr::a(
                     Expr::a(Expr::v("x"), Expr::v("z")),
@@ -94,28 +94,28 @@ mod tests {
         );
 
         assert_eq!(env.count(), 3);
-        assert_eq!(env.arity(&Identifier::new("I")), Some(1));
-        assert_eq!(env.arity(&Identifier::new("K")), Some(2));
-        assert_eq!(env.arity(&Identifier::new("S")), Some(3));
-        assert_eq!(env.arity(&Identifier::new("UNDEFINED")), None);
+        assert_eq!(env.arity(&Ident::new("I")), Some(1));
+        assert_eq!(env.arity(&Ident::new("K")), Some(2));
+        assert_eq!(env.arity(&Ident::new("S")), Some(3));
+        assert_eq!(env.arity(&Ident::new("UNDEFINED")), None);
 
-        env.del(&Identifier::new("I"));
+        env.del(&Ident::new("I"));
         assert_eq!(env.count(), 2);
-        assert_eq!(env.arity(&Identifier::new("I")), None);
+        assert_eq!(env.arity(&Ident::new("I")), None);
     }
 
     #[test]
     fn test_env_from() {
-        let i: Func = Func::new(vec![Identifier::new("x")], Expr::v("x"));
+        let i: Func = Func::new(vec![Ident::new("x")], Expr::v("x"));
         let k: Func = Func::new(
-            vec![Identifier::new("x"), Identifier::new("y")],
+            vec![Ident::new("x"), Ident::new("y")],
             Expr::v("x"),
         );
         let s: Func = Func::new(
             vec![
-                Identifier::new("x"),
-                Identifier::new("y"),
-                Identifier::new("z"),
+                Ident::new("x"),
+                Ident::new("y"),
+                Ident::new("z"),
             ],
             Expr::a(
                 Expr::a(Expr::v("x"), Expr::v("z")),
@@ -124,15 +124,15 @@ mod tests {
         );
 
         let env: Env = Env::from(vec![
-            (Identifier::new("I"), i),
-            (Identifier::new("K"), k),
-            (Identifier::new("S"), s),
+            (Ident::new("I"), i),
+            (Ident::new("K"), k),
+            (Ident::new("S"), s),
         ]);
 
         assert_eq!(env.count(), 3);
-        assert_eq!(env.arity(&Identifier::new("I")), Some(1));
-        assert_eq!(env.arity(&Identifier::new("K")), Some(2));
-        assert_eq!(env.arity(&Identifier::new("S")), Some(3));
-        assert_eq!(env.arity(&Identifier::new("UNDEFINED")), None);
+        assert_eq!(env.arity(&Ident::new("I")), Some(1));
+        assert_eq!(env.arity(&Ident::new("K")), Some(2));
+        assert_eq!(env.arity(&Ident::new("S")), Some(3));
+        assert_eq!(env.arity(&Ident::new("UNDEFINED")), None);
     }
 }

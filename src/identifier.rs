@@ -2,38 +2,38 @@ use std::collections::HashSet;
 
 /// ラムダ式や関数定義における識別子を表現する
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
-pub struct Identifier(String);
+pub struct Ident(String);
 
-impl Identifier {
-    pub fn new(s: &str) -> Identifier {
-        Identifier(String::from(s))
+impl Ident {
+    pub fn new(s: &str) -> Ident {
+        Ident(String::from(s))
     }
 
-    pub fn new_name(&self, vars: &HashSet<Identifier>) -> Identifier {
+    pub fn new_name(&self, vars: &HashSet<Ident>) -> Ident {
         let mut name = self.0.to_uppercase();
 
-        if !vars.contains(&Identifier(name.clone())) {
-            return Identifier(name);
+        if !vars.contains(&Ident(name.clone())) {
+            return Ident(name);
         }
 
         let mut i = 0;
-        while vars.contains(&Identifier(name.clone())) {
+        while vars.contains(&Ident(name.clone())) {
             name = format!("{}{}", self.0.to_uppercase(), i);
             i += 1;
         }
-        Identifier(name)
+        Ident(name)
     }
 }
 
-impl From<&str> for Identifier {
+impl From<&str> for Ident {
     fn from(s: &str) -> Self {
-        Identifier::new(s)
+        Ident::new(s)
     }
 }
 
 #[test]
 fn test_new_name() {
-    let mut set: HashSet<Identifier> = HashSet::new();
+    let mut set: HashSet<Ident> = HashSet::new();
 
     set.insert("x".into());
     set.insert("X".into());
@@ -45,7 +45,7 @@ fn test_new_name() {
     set.insert("X5".into());
     set.insert("X7".into());
 
-    assert_eq!(Identifier::new("x").new_name(&set), Identifier::new("X6"));
-    assert_eq!(Identifier::new("X").new_name(&set), Identifier::new("X6"));
-    assert_eq!(Identifier::new("y").new_name(&set), Identifier::new("Y"));
+    assert_eq!(Ident::new("x").new_name(&set), Ident::new("X6"));
+    assert_eq!(Ident::new("X").new_name(&set), Ident::new("X6"));
+    assert_eq!(Ident::new("y").new_name(&set), Ident::new("Y"));
 }

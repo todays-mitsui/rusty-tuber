@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use crate::identifier::Identifier;
+use crate::identifier::Ident;
 use crate::expression::Expr;
 
-type FreeVars = HashSet<Identifier>;
-type BoundVars = HashSet<Identifier>;
+type FreeVars = HashSet<Ident>;
+type BoundVars = HashSet<Ident>;
 
 impl Expr {
     /// 指定した識別子を別の式で置き換えた新しい式を得る
@@ -13,14 +13,14 @@ impl Expr {
     /// 束縛変数のリネームを行うことがある (α変換)
     ///
     /// ```
-    /// # use rusty_tuber::identifier::Identifier;
+    /// # use rusty_tuber::identifier::Ident;
     /// # use rusty_tuber::expression::Expr;
     /// // ^y.`xy [x := y]
     /// let expr = Expr::l(
-    ///     Identifier::from("y"),
+    ///     Ident::from("y"),
     ///     Expr::a(Expr::v("x"), Expr::v("y"))
     /// );
-    /// let param = Identifier::from("x");
+    /// let param = Ident::from("x");
     /// let arg = Expr::v("y");
     ///
     /// // 単純に x を y に置換した結果にはならない
@@ -29,7 +29,7 @@ impl Expr {
     ///     expr.clone().substitute(&param, &arg),
     ///     // ^y.`yy
     ///     Expr::l(
-    ///         Identifier::from("y"),
+    ///         Ident::from("y"),
     ///         Expr::a("y".into(), "y".into())
     ///     )
     /// );
@@ -39,19 +39,19 @@ impl Expr {
     ///     expr.clone().substitute(&param, &arg),
     ///     // ^Y.`xY
     ///     Expr::l(
-    ///         Identifier::from("Y"),
+    ///         Ident::from("Y"),
     ///         Expr::a("y".into(), "Y".into())
     ///     )
     /// );
     /// ```
-    pub fn substitute(self, param: &Identifier, arg: &Expr) -> Expr {
+    pub fn substitute(self, param: &Ident, arg: &Expr) -> Expr {
         let mut vars: FreeVars = HashSet::new();
         self.substitute_impl(param, arg, &arg.free_vars(), &mut vars)
     }
 
     fn substitute_impl(
         self,
-        param: &Identifier,
+        param: &Ident,
         arg: &Expr,
         free_vars: &FreeVars,
         bound_vars: &mut BoundVars,
@@ -76,7 +76,7 @@ impl Expr {
                 if &p == param {
                     Expr::Lambda { param: p, body }
                 } else if free_vars.contains(&p) {
-                    let new_param: Identifier = p.new_name(bound_vars);
+                    let new_param: Ident = p.new_name(bound_vars);
                     bound_vars.insert(new_param.clone());
 
                     let mut new_body = body.clone();
@@ -98,7 +98,7 @@ impl Expr {
     }
 
     /// 式の中の自由変数を別の識別子に置き換える
-    fn rename_var(&mut self, old: &Identifier, new: &Identifier) {
+    fn rename_var(&mut self, old: &Ident, new: &Ident) {
         match self {
             Expr::Variable(id) => {
                 if id == old {

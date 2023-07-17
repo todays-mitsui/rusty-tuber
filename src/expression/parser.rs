@@ -4,9 +4,9 @@ use combine::parser::choice::choice;
 use combine::EasyParser;
 use combine::{many1, parser, ParseError, Parser, Stream};
 
-use crate::expression::{Expr, Identifier};
+use crate::expression::{Expr, Ident};
 
-fn identifier<Input>() -> impl Parser<Input, Output = Identifier>
+fn identifier<Input>() -> impl Parser<Input, Output = Ident>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -26,12 +26,12 @@ fn test_identifier() {
     assert!(identifier().parse("^abc").is_err());
 }
 
-fn short_identifier<Input>() -> impl Parser<Input, Output = Identifier>
+fn short_identifier<Input>() -> impl Parser<Input, Output = Ident>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    lower().map(|c| Identifier::new(&c.to_string()))
+    lower().map(|c| Ident::new(&c.to_string()))
 }
 
 #[test]
@@ -41,12 +41,12 @@ fn test_short_identifier() {
     assert!(short_identifier().parse("A").is_err());
 }
 
-fn long_identifier<Input>() -> impl Parser<Input, Output = Identifier>
+fn long_identifier<Input>() -> impl Parser<Input, Output = Ident>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    many1(choice((digit(), upper(), char('_')))).map(|s: String| Identifier::new(&s))
+    many1(choice((digit(), upper(), char('_')))).map(|s: String| Ident::new(&s))
 }
 
 #[test]

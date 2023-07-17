@@ -1,14 +1,14 @@
 use crate::expression::Expr;
-use crate::identifier::Identifier;
+use crate::identifier::Ident;
 
 #[derive(Debug, PartialEq)]
 pub struct Func {
-    params: Vec<Identifier>,
+    params: Vec<Ident>,
     body: Expr,
 }
 
 impl Func {
-    pub fn new(params: Vec<Identifier>, body: Expr) -> Func {
+    pub fn new(params: Vec<Ident>, body: Expr) -> Func {
         Func { params, body }
     }
 
@@ -36,14 +36,14 @@ impl Func {
 
 pub fn i() -> Func {
     Func {
-        params: vec![Identifier::new("x")],
+        params: vec![Ident::new("x")],
         body: Expr::v("x"),
     }
 }
 
 pub fn k() -> Func {
     Func {
-        params: vec![Identifier::new("x"), Identifier::new("y")],
+        params: vec![Ident::new("x"), Ident::new("y")],
         body: Expr::v("x"),
     }
 }
@@ -51,9 +51,9 @@ pub fn k() -> Func {
 pub fn s() -> Func {
     Func {
         params: vec![
-            Identifier::new("x"),
-            Identifier::new("y"),
-            Identifier::new("z"),
+            Ident::new("x"),
+            Ident::new("y"),
+            Ident::new("z"),
         ],
         body: Expr::a(
             Expr::a(Expr::v("x"), Expr::v("z")),
