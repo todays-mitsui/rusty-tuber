@@ -8,7 +8,6 @@ pub struct EvalSteps<'a> {
     stack: Stack<'a>,
     env: &'a Env,
     status: Status,
-    rightIters: Vec<EvalSteps<'a>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -26,7 +25,6 @@ impl EvalSteps<'_> {
             env,
 
             status: Status::LeftTree,
-            rightIters: Vec::new(),
         }
     }
 
@@ -56,15 +54,15 @@ impl Iterator for EvalSteps<'_> {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.status {
-            Status::LeftTree => self.leftTree(),
-            Status::RightTree(n) => self.rightTree(n),
+            Status::LeftTree => self.left_tree(),
+            Status::RightTree(n) => self.right_tree(n),
             Status::Done => None,
         }
     }
 }
 
 impl EvalSteps<'_> {
-    fn leftTree(&mut self) -> Option<Expr> {
+    fn left_tree(&mut self) -> Option<Expr> {
         while let Apply { lhs, rhs } = self.expr.clone() {
             self.expr = *lhs;
             self.stack.push(EvalSteps::new(*rhs, self.env));
@@ -88,24 +86,26 @@ impl EvalSteps<'_> {
 
             None => {
                 self.status = Status::RightTree(0);
-                self.rightIters = self
-                    .stack
-                    .all()
-                    .iter()
-                    .map(|arg| EvalSteps::new(arg.expr().clone(), self.env))
-                    .collect();
                 self.next()
             }
         }
     }
 
-    fn rightTree(&mut self, n: usize) -> Option<Expr> {
-        if self.rightIters.len() < n {
-            self.status = Status::Done;
-            self.next()
-        } else {
-            self.status = Status::RightTree(n + 1);
-            self.next()
+    fn right_tree(&mut self, n: usize) -> Option<Expr> {
+        match self.stack.nth(n) {
+            None => {
+                self.status = Status::Done;
+                self.next()
+            }
+
+            Some(step) => match step.next() {
+                None => {
+                    self.status = Status::RightTree(n + 1);
+                    self.next()
+                }
+
+                Some(expr) => Some(expr),
+            },
         }
     }
 }
@@ -142,6 +142,10 @@ impl<'a> Stack<'a> {
 
     fn len(&self) -> usize {
         self.0.len()
+    }
+
+    fn nth(&mut self, n: usize) -> Option<&mut EvalSteps<'a>> {
+        self.0.get_mut(n)
     }
 }
 
