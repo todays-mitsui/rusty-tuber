@@ -27,7 +27,17 @@ impl EvalSteps<'_> {
         }
     }
 
-    pub fn assemble(&self) -> Expr {
+    fn expr(&self) -> Expr {
+        let mut expr = self.expr.clone();
+
+        for arg in self.stack.all() {
+            expr = Expr::a(expr, arg);
+        }
+
+        expr
+    }
+
+    fn assemble(&self) -> Expr {
         let mut expr = self.expr.clone();
 
         for arg in self.stack.all() {
@@ -126,16 +136,6 @@ impl Stack {
 
     fn len(&self) -> usize {
         self.0.len()
-    }
-}
-
-impl From<Stack> for Vec<EvalSteps> {
-    fn from(stack: Stack) -> Self {
-        stack
-            .0
-            .into_iter()
-            .map(|expr| EvalSteps::new(expr, &Env::new()))
-            .collect()
     }
 }
 
