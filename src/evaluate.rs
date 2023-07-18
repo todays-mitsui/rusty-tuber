@@ -10,6 +10,7 @@ pub struct EvalSteps<'a> {
     step: Step,
 }
 
+/// 簡約のステップ
 /// 最左最外簡約を行うために LeftTree → RightTree の順に簡約を試みる
 /// 式全体を簡約し終えて正規形を得たら Done となる、それ以上簡約するべきものは何も無い
 #[derive(Debug, Clone, PartialEq)]
