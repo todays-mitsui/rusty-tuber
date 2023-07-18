@@ -103,7 +103,7 @@ impl EvalSteps<'_> {
                     self.step = Step::RightTree(n + 1);
                     self.next()
                 }
-            }
+            },
 
             // n がスタックの長さを超えているなら、もう簡約するべきものは何も無い
             None => {
@@ -324,6 +324,60 @@ mod tests {
         let mut steps = EvalSteps::new(expr, &env);
 
         assert_eq!(steps.next(), Some(Expr::a(":a".into(), ":b".into())));
+        assert_eq!(steps.next(), None);
+    }
+
+    #[test]
+    fn test_eval_steps() {
+        let env = setup();
+
+        // ```s^x.`x:a^x.`x:b:c
+        let expr = Expr::a(
+            Expr::a(
+                Expr::a(
+                    "s".into(),
+                    Expr::l("x".into(), Expr::a("x".into(), ":a".into())),
+                ),
+                Expr::l("x".into(), Expr::a("x".into(), ":b".into())),
+            ),
+            ":c".into(),
+        );
+
+        let mut steps = EvalSteps::new(expr, &env);
+
+        assert_eq!(
+            steps.next(),
+            // ``^x.`x:a:c`^x.`x:b:c
+            Some(Expr::a(
+                Expr::a(
+                    Expr::l("x".into(), Expr::a("x".into(), ":a".into())),
+                    ":c".into()
+                ),
+                Expr::a(
+                    Expr::l("x".into(), Expr::a("x".into(), ":b".into())),
+                    ":c".into()
+                )
+            ))
+        );
+        assert_eq!(
+            steps.next(),
+            // ``:c:a`^x.`x:b:c
+            Some(Expr::a(
+                Expr::a(":c".into(), ":a".into()),
+                Expr::a(
+                    Expr::l("x".into(), Expr::a("x".into(), ":b".into())),
+                    ":c".into()
+                )
+            ))
+        );
+        assert_eq!(
+            steps.next(),
+            // ``:c:a`:c:b
+            Some(Expr::a(
+                Expr::a(":c".into(), ":a".into()),
+                Expr::a(":c".into(), ":b".into()),
+            ))
+        );
         assert_eq!(steps.next(), None);
     }
 
