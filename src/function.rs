@@ -32,6 +32,7 @@ impl Func {
     }
 }
 
+/// i := ^x.x
 pub fn i() -> Func {
     Func {
         params: vec![Ident::new("x")],
@@ -39,6 +40,7 @@ pub fn i() -> Func {
     }
 }
 
+/// k := ^x.^y.x
 pub fn k() -> Func {
     Func {
         params: vec![Ident::new("x"), Ident::new("y")],
@@ -46,6 +48,7 @@ pub fn k() -> Func {
     }
 }
 
+/// s := ^x.^y.^z.``xz`yz
 pub fn s() -> Func {
     Func {
         params: vec![Ident::new("x"), Ident::new("y"), Ident::new("z")],
