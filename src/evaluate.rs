@@ -7,11 +7,13 @@ pub struct EvalSteps<'a> {
     expr: Expr,
     stack: Stack<'a>,
     env: &'a Env,
-    status: Status,
+    step: Step,
 }
 
+/// 最左最外簡約を行うために LeftTree → RightTree の順に簡約を試みる
+/// 式全体を簡約し終えて正規形を得たら Done となる、それ以上簡約するべきものは何も無い
 #[derive(Debug, Clone, PartialEq)]
-enum Status {
+enum Step {
     LeftTree,
     RightTree(usize),
     Done,
@@ -23,8 +25,7 @@ impl EvalSteps<'_> {
             expr,
             stack: Stack::new(),
             env,
-
-            status: Status::LeftTree,
+            step: Step::LeftTree,
         }
     }
 
@@ -53,10 +54,10 @@ impl Iterator for EvalSteps<'_> {
     type Item = Expr;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.status {
-            Status::LeftTree => self.left_tree(),
-            Status::RightTree(n) => self.right_tree(n),
-            Status::Done => None,
+        match self.step {
+            Step::LeftTree => self.left_tree(),
+            Step::RightTree(n) => self.right_tree(n),
+            Step::Done => None,
         }
     }
 }
@@ -85,7 +86,7 @@ impl EvalSteps<'_> {
             Some(expr) => Some(expr),
 
             None => {
-                self.status = Status::RightTree(0);
+                self.step = Step::RightTree(0);
                 self.next()
             }
         }
@@ -93,19 +94,22 @@ impl EvalSteps<'_> {
 
     fn right_tree(&mut self, n: usize) -> Option<Expr> {
         match self.stack.nth(n) {
-            None => {
-                self.status = Status::Done;
-                self.next()
-            }
-
+            // スタックの n 番目の枝を取得し、その枝の簡約を試みる
             Some(step) => match step.next() {
+                Some(_) => Some(self.expr()),
+
+                // n 番目の枝が簡約済みなら、n+1 番目の枝へ進む
                 None => {
-                    self.status = Status::RightTree(n + 1);
+                    self.step = Step::RightTree(n + 1);
                     self.next()
                 }
+            }
 
-                Some(expr) => Some(expr),
-            },
+            // n がスタックの長さを超えているなら、もう簡約するべきものは何も無い
+            None => {
+                self.step = Step::Done;
+                self.next()
+            }
         }
     }
 }
@@ -295,7 +299,7 @@ mod tests {
     }
 
     #[test]
-    fn test_eval_steps() {
+    fn test_eval_steps_skk() {
         let env = setup();
 
         let expr = Expr::a(
@@ -306,6 +310,21 @@ mod tests {
         let steps = EvalSteps::new(expr, &env);
 
         assert_eq!(steps.last(), Some(Expr::s("a")));
+    }
+
+    #[test]
+    fn test_eval_steps_right_tree() {
+        let env = setup();
+
+        let expr = Expr::a(
+            ":a".into(),
+            Expr::a(Expr::a("k".into(), ":b".into()), ":c".into()),
+        );
+
+        let mut steps = EvalSteps::new(expr, &env);
+
+        assert_eq!(steps.next(), Some(Expr::a(":a".into(), ":b".into())));
+        assert_eq!(steps.next(), None);
     }
 
     #[test]
