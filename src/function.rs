@@ -4,7 +4,7 @@ use crate::identifier::Ident;
 /// 定義済み関数を表現する
 ///
 /// 関数とラムダ抽象はよく似ているが、関数が 0 以上の arity を持つ点で異なる
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Func {
     params: Vec<Ident>,
     body: Expr,
@@ -32,6 +32,7 @@ impl Func {
     }
 }
 
+/// i := ^x.x
 pub fn i() -> Func {
     Func {
         params: vec![Ident::new("x")],
@@ -39,6 +40,7 @@ pub fn i() -> Func {
     }
 }
 
+/// k := ^x.^y.x
 pub fn k() -> Func {
     Func {
         params: vec![Ident::new("x"), Ident::new("y")],
@@ -46,13 +48,10 @@ pub fn k() -> Func {
     }
 }
 
+/// s := ^x.^y.^z.``xz`yz
 pub fn s() -> Func {
     Func {
-        params: vec![
-            Ident::new("x"),
-            Ident::new("y"),
-            Ident::new("z"),
-        ],
+        params: vec![Ident::new("x"), Ident::new("y"), Ident::new("z")],
         body: Expr::a(
             Expr::a(Expr::v("x"), Expr::v("z")),
             Expr::a(Expr::v("y"), Expr::v("z")),
