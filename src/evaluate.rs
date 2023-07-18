@@ -39,16 +39,6 @@ impl EvalSteps<'_> {
 
         expr
     }
-
-    fn assemble(&self) -> Expr {
-        let mut expr = self.expr.clone();
-
-        for arg in self.stack.all() {
-            expr = Expr::a(expr, arg.expr());
-        }
-
-        expr
-    }
 }
 
 impl Iterator for EvalSteps<'_> {
@@ -80,7 +70,7 @@ impl EvalSteps<'_> {
             })
             .map(|expr| {
                 self.expr = expr;
-                self.assemble()
+                self.expr()
             });
 
         match maybe_next {
@@ -149,8 +139,14 @@ impl<'a> Stack<'a> {
         self.0.len()
     }
 
+    /// 末尾から数えて n 番目の要素を取得する
     fn nth(&mut self, n: usize) -> Option<&mut EvalSteps<'a>> {
-        self.0.get_mut(n)
+        let len = self.0.len();
+        if n >= len {
+            None
+        } else {
+            self.0.get_mut(len - n - 1)
+        }
     }
 }
 
@@ -314,7 +310,7 @@ mod tests {
     }
 
     #[test]
-    fn test_eval_steps_right_tree() {
+    fn test_eval_steps_right_tree_1() {
         let env = setup();
 
         let expr = Expr::a(
@@ -325,6 +321,32 @@ mod tests {
         let mut steps = EvalSteps::new(expr, &env);
 
         assert_eq!(steps.next(), Some(Expr::a(":a".into(), ":b".into())));
+        assert_eq!(steps.next(), None);
+    }
+
+    #[test]
+    fn test_eval_steps_right_tree_2() {
+        let env = setup();
+
+        // ```:a`i:b`i:c
+        let expr = Expr::a(
+            Expr::a(":a".into(), Expr::a("i".into(), ":b".into())),
+            Expr::a("i".into(), ":c".into()),
+        );
+
+        let mut steps = EvalSteps::new(expr, &env);
+
+        assert_eq!(
+            steps.next(),
+            Some(Expr::a(
+                Expr::a(":a".into(), ":b".into(),),
+                Expr::a("i".into(), ":c".into())
+            ))
+        );
+        assert_eq!(
+            steps.next(),
+            Some(Expr::a(Expr::a(":a".into(), ":b".into(),), ":c".into()))
+        );
         assert_eq!(steps.next(), None);
     }
 
@@ -432,5 +454,20 @@ mod tests {
 
         let stack0 = Stack(vec![]);
         assert_eq!(stack0.all(), vec![]);
+    }
+
+    #[test]
+    fn test_stack_nth() {
+        let env = Env::new();
+        let mut stack = Stack(vec![
+            EvalSteps::new(Expr::v("x"), &env),
+            EvalSteps::new(Expr::v("y"), &env),
+            EvalSteps::new(Expr::v("z"), &env),
+        ]);
+
+        assert_eq!(stack.nth(0), Some(&mut EvalSteps::new(Expr::v("z"), &env)));
+        assert_eq!(stack.nth(1), Some(&mut EvalSteps::new(Expr::v("y"), &env)));
+        assert_eq!(stack.nth(2), Some(&mut EvalSteps::new(Expr::v("x"), &env)));
+        assert_eq!(stack.nth(3), None);
     }
 }
