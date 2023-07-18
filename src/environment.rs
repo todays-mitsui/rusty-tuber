@@ -7,6 +7,7 @@ use crate::identifier::Ident;
 /// 定義済みの名前空間を表現する
 ///
 /// 識別子と関数の組を保持する
+#[derive(Debug, Clone, PartialEq)]
 pub struct Env {
     env: HashMap<Ident, Func>,
 }

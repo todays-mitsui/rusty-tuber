@@ -2,14 +2,16 @@ use crate::environment::Env;
 use crate::expression::Expr;
 use crate::expression::Expr::*;
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct EvalSteps<'a> {
     expr: Expr,
-    stack: Stack,
+    stack: Stack<'a>,
     env: &'a Env,
     status: Status,
     rightIters: Vec<EvalSteps<'a>>,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 enum Status {
     LeftTree,
     RightTree(usize),
@@ -22,6 +24,7 @@ impl EvalSteps<'_> {
             expr,
             stack: Stack::new(),
             env,
+
             status: Status::LeftTree,
             rightIters: Vec::new(),
         }
@@ -31,7 +34,7 @@ impl EvalSteps<'_> {
         let mut expr = self.expr.clone();
 
         for arg in self.stack.all() {
-            expr = Expr::a(expr, arg);
+            expr = Expr::a(expr, arg.expr());
         }
 
         expr
@@ -41,7 +44,7 @@ impl EvalSteps<'_> {
         let mut expr = self.expr.clone();
 
         for arg in self.stack.all() {
-            expr = Expr::a(expr, arg);
+            expr = Expr::a(expr, arg.expr());
         }
 
         expr
@@ -64,14 +67,17 @@ impl EvalSteps<'_> {
     fn leftTree(&mut self) -> Option<Expr> {
         while let Apply { lhs, rhs } = self.expr.clone() {
             self.expr = *lhs;
-            self.stack.push(*rhs);
+            self.stack.push(EvalSteps::new(*rhs, self.env));
         }
 
         let maybe_next = self
             .expr
             .arity(&self.env)
             .and_then(|a| self.stack.pop(a))
-            .and_then(|args| self.expr.apply(&self.env, args))
+            .and_then(|args| {
+                self.expr
+                    .apply(&self.env, args.iter().map(|arg| arg.expr()).collect())
+            })
             .map(|expr| {
                 self.expr = expr;
                 self.assemble()
@@ -86,10 +92,10 @@ impl EvalSteps<'_> {
                     .stack
                     .all()
                     .iter()
-                    .map(|arg| EvalSteps::new(arg.clone(), self.env))
+                    .map(|arg| EvalSteps::new(arg.expr().clone(), self.env))
                     .collect();
                 self.next()
-            },
+            }
         }
     }
 
@@ -106,19 +112,19 @@ impl EvalSteps<'_> {
 
 // ========================================================================== //
 
-#[derive(Debug)]
-struct Stack(Vec<Expr>);
+#[derive(Debug, Clone, PartialEq)]
+struct Stack<'a>(Vec<EvalSteps<'a>>);
 
-impl Stack {
-    fn new() -> Stack {
+impl<'a> Stack<'a> {
+    fn new() -> Stack<'a> {
         Stack(Vec::new())
     }
 
-    fn push(&mut self, expr: Expr) {
+    fn push(&mut self, expr: EvalSteps<'a>) {
         self.0.push(expr);
     }
 
-    fn pop(&mut self, n: usize) -> Option<Vec<Expr>> {
+    fn pop(&mut self, n: usize) -> Option<Vec<EvalSteps>> {
         let length = self.len();
 
         if length >= n {
@@ -128,7 +134,7 @@ impl Stack {
         }
     }
 
-    fn all(&self) -> Vec<Expr> {
+    fn all(&self) -> Vec<EvalSteps> {
         let mut all = self.0.clone();
         all.reverse();
         all
@@ -286,19 +292,29 @@ mod tests {
 
     #[test]
     fn test_stack_pop() {
-        let mut stack = Stack(vec![Expr::v("x"), Expr::v("y")]);
+        let env = Env::new();
+        let mut stack = Stack(vec![
+            EvalSteps::new(Expr::v("x"), &env),
+            EvalSteps::new(Expr::v("y"), &env),
+        ]);
 
         assert_eq!(stack.len(), 2);
 
-        stack.push(Expr::v("z"));
+        stack.push(EvalSteps::new(Expr::v("z"), &env));
 
         assert_eq!(stack.len(), 3);
 
-        assert_eq!(stack.pop(2), Some(vec!["z".into(), "y".into()]));
+        assert_eq!(
+            stack.pop(2),
+            Some(vec![
+                EvalSteps::new(Expr::v("z"), &env),
+                EvalSteps::new(Expr::v("y"), &env)
+            ])
+        );
 
         assert_eq!(stack.len(), 1);
 
-        assert_eq!(stack.pop(1), Some(vec!["x".into()]));
+        assert_eq!(stack.pop(1), Some(vec![EvalSteps::new(Expr::v("x"), &env)]));
 
         assert_eq!(stack.len(), 0);
 
@@ -307,8 +323,20 @@ mod tests {
 
     #[test]
     fn test_stack_all() {
-        let stack = Stack(vec![Expr::v("x"), Expr::v("y"), Expr::v("z")]);
-        assert_eq!(stack.all(), vec![Expr::v("z"), Expr::v("y"), Expr::v("x")]);
+        let env = Env::new();
+        let stack = Stack(vec![
+            EvalSteps::new(Expr::v("x"), &env),
+            EvalSteps::new(Expr::v("y"), &env),
+            EvalSteps::new(Expr::v("z"), &env),
+        ]);
+        assert_eq!(
+            stack.all(),
+            vec![
+                EvalSteps::new(Expr::v("z"), &env),
+                EvalSteps::new(Expr::v("y"), &env),
+                EvalSteps::new(Expr::v("x"), &env),
+            ]
+        );
 
         let stack0 = Stack(vec![]);
         assert_eq!(stack0.all(), vec![]);
