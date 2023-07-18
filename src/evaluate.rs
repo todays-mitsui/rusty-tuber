@@ -295,6 +295,20 @@ mod tests {
     }
 
     #[test]
+    fn test_eval_steps() {
+        let env = setup();
+
+        let expr = Expr::a(
+            Expr::a(Expr::a("s".into(), "k".into()), "k".into()),
+            ":a".into(),
+        );
+
+        let steps = EvalSteps::new(expr, &env);
+
+        assert_eq!(steps.last(), Some(Expr::s("a")));
+    }
+
+    #[test]
     fn test_stack_pop() {
         let env = Env::new();
         let mut stack = Stack(vec![
