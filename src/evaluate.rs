@@ -63,7 +63,7 @@ impl EvalSteps<'_> {
         let maybe_next = self
             .expr
             .arity(&self.env)
-            .filter(|a| *a >= 1)
+            .filter(|a| *a >= 1 || self.stack.len() >= 1)
             .and_then(|a| self.stack.pop(a))
             .and_then(|args| {
                 self.expr
@@ -243,6 +243,20 @@ mod tests {
 
         let mut steps = EvalSteps::new(expr, &env);
 
+        assert_eq!(steps.next(), None);
+    }
+
+    #[test]
+    fn test_eval_steps_func_true_3() {
+        let env = setup();
+
+        let expr = Expr::a(Expr::a("true".into(), ":a".into()), ":b".into());
+
+        let mut steps = EvalSteps::new(expr, &env);
+
+        assert_eq!(steps.next(), Some(Expr::a(Expr::a(Expr::a("k".into(), "i".into()), ":a".into()), ":b".into())));
+        assert_eq!(steps.next(), Some(Expr::a("i".into(), ":b".into())));
+        assert_eq!(steps.next(), Some(":b".into()));
         assert_eq!(steps.next(), None);
     }
 
