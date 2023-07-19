@@ -168,7 +168,16 @@ mod tests {
             ),
         );
 
-        Env::from(vec![("i".into(), i), ("k".into(), k), ("s".into(), s)])
+        let _true = Func::new(vec![], Expr::a("k".into(), "i".into()));
+        let _false = Func::new(vec![], "k".into());
+
+        Env::from(vec![
+            ("i".into(), i),
+            ("k".into(), k),
+            ("s".into(), s),
+            ("true".into(), _true),
+            ("false".into(), _false),
+        ])
     }
 
     #[test]
@@ -211,6 +220,17 @@ mod tests {
             Some(Expr::a(Expr::l("y".into(), ":a".into()), ":b".into()))
         );
         assert_eq!(steps.next(), Some(":a".into()));
+        assert_eq!(steps.next(), None);
+    }
+
+    #[test]
+    fn test_eval_steps_func_true() {
+        let env = setup();
+
+        let expr: Expr = "true".into();
+
+        let mut steps = EvalSteps::new(expr, &env);
+
         assert_eq!(steps.next(), None);
     }
 
