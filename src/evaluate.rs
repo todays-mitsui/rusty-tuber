@@ -254,7 +254,13 @@ mod tests {
 
         let mut steps = EvalSteps::new(expr, &env);
 
-        assert_eq!(steps.next(), Some(Expr::a(Expr::a(Expr::a("k".into(), "i".into()), ":a".into()), ":b".into())));
+        assert_eq!(
+            steps.next(),
+            Some(Expr::a(
+                Expr::a(Expr::a("k".into(), "i".into()), ":a".into()),
+                ":b".into()
+            ))
+        );
         assert_eq!(steps.next(), Some(Expr::a("i".into(), ":b".into())));
         assert_eq!(steps.next(), Some(":b".into()));
         assert_eq!(steps.next(), None);

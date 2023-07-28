@@ -1,5 +1,4 @@
 mod apply;
-pub mod parser;
 mod substitute;
 
 use crate::identifier::Ident;
