@@ -2,13 +2,30 @@ use combine::parser::char::{char, spaces};
 use combine::parser::choice::choice;
 #[allow(unused_imports)]
 use combine::EasyParser;
-use combine::{parser, ParseError, Parser, Stream};
+use combine::{eof, parser, ParseError, Parser, Stream};
 
 use crate::command::Command;
 use crate::function::Func;
 use crate::identifier::Ident;
 use crate::parser::expression::expr;
 use crate::parser::identifier::identifier;
+
+// pub fn command<Input>() -> impl Parser<Input, Output = Command>
+// where
+//     Input: Stream<Token = char>,
+//     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+//     <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+//         From<::std::num::ParseIntError>,
+// {
+//     choice((
+//         update(),
+//         eval(),
+//         info(),
+//         global(),
+//     )).skip(spaces()).skip(eof())
+// }
+
+// ========================================================================== //
 
 pub fn update<Input>() -> impl Parser<Input, Output = Command>
 where
@@ -46,10 +63,9 @@ parser! {
             char('`')
                 .with(spaces())
                 .with(def_lhs().and(identifier()))
-                .map(|(lhs, i)| {
-                    let mut new_lhs = lhs.clone();
-                    new_lhs.1.push(i);
-                    new_lhs
+                .map(|(mut lhs, i)| {
+                    lhs.1.push(i);
+                    lhs
                 }),
             identifier().map(|i| (i, vec![])),
         )))
@@ -86,7 +102,7 @@ where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
-    spaces().with(char('?')).map(|_| Command::Global)
+    spaces().skip(char('?')).map(|_| Command::Global)
 }
 
 // ========================================================================== //
@@ -96,6 +112,54 @@ mod tests {
     use super::*;
     use crate::command::Command;
     use crate::expression::Expr;
+
+    // #[test]
+    // fn test_command() {
+    //     assert_eq!(
+    //         command().easy_parse("f=g"),
+    //         Ok((
+    //             Command::Update("f".into(), Func::new(vec![], "g".into())),
+    //             ""
+    //         ))
+    //     );
+
+    //     assert_eq!(
+    //         command().easy_parse("`ix = x"),
+    //         Ok((
+    //             Command::Update("i".into(), Func::new(vec!["x".into()], "x".into())),
+    //             ""
+    //         ))
+    //     );
+
+    //     assert_eq!(
+    //         command().easy_parse("```sxyz = ``xz`yz"),
+    //         Ok((
+    //             Command::Update(
+    //                 "s".into(),
+    //                 Func::new(
+    //                     vec!["x".into(), "y".into(), "z".into()],
+    //                     Expr::a(
+    //                         Expr::a("x".into(), "z".into()),
+    //                         Expr::a("y".into(), "z".into())
+    //                     )
+    //                 )
+    //             ),
+    //             ""
+    //         ))
+    //     );
+
+    //     assert_eq!(
+    //         command().easy_parse("`ab"),
+    //         Ok((Command::Eval(Expr::a("a".into(), "b".into())), ""))
+    //     );
+
+    //     assert_eq!(
+    //         command().easy_parse("? a"),
+    //         Ok((Command::Info("a".into()), ""))
+    //     );
+
+    //     assert_eq!(command().easy_parse("?"), Ok((Command::Global, "")));
+    // }
 
     #[test]
     fn test_def() {
@@ -184,5 +248,10 @@ mod tests {
             info().easy_parse("? a"),
             Ok((Command::Info("a".into()), ""))
         );
+    }
+
+    #[test]
+    fn test_global() {
+        assert_eq!(global().easy_parse("?"), Ok((Command::Global, "")));
     }
 }
