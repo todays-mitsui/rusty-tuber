@@ -117,6 +117,10 @@ fn test_to_string() {
         Expr::l("x".into(), Expr::a("y".into(), "z".into())).to_string(),
         "^x.`yz"
     );
+    assert_eq!(
+        Expr::l("X".into(), Expr::a("y".into(), "z".into())).to_string(),
+        "^X.`yz"
+    );
 
     assert_eq!(Expr::a("x".into(), "Y".into()).to_string(), "`xY");
     assert_eq!(Expr::a("X".into(), "y".into()).to_string(), "`Xy");
