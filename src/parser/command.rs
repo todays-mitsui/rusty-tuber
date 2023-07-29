@@ -128,7 +128,10 @@ mod tests {
 
         assert_eq!(
             parse_command("`ix = x"),
-            Ok(Command::Update("i".into(), Func::new(vec!["x".into()], "x".into())))
+            Ok(Command::Update(
+                "i".into(),
+                Func::new(vec!["x".into()], "x".into())
+            ))
         );
 
         assert_eq!(
