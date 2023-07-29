@@ -1,7 +1,6 @@
 use std::fmt::Display;
 
 use crate::expression::Expr;
-use crate::identifier::Ident;
 use regex::Regex;
 
 impl Display for Expr {
