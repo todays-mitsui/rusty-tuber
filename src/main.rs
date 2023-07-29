@@ -9,7 +9,7 @@ mod parser;
 
 use clap::Parser;
 
-use history::load_or_create_history_file;
+use history::open_or_create_history_file;
 
 /// An interpreter that evaluates λ-calculations step by step.
 #[derive(Parser, Debug)]
@@ -23,5 +23,5 @@ fn main() {
     let args = Args::parse();
     println!("{}", args.command);
 
-    let file = load_or_create_history_file();
+    let file = open_or_create_history_file();
 }

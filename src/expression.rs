@@ -1,4 +1,5 @@
 mod apply;
+mod display;
 mod substitute;
 
 use crate::identifier::Ident;

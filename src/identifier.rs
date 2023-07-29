@@ -31,6 +31,12 @@ impl From<&str> for Ident {
     }
 }
 
+impl std::fmt::Display for Ident {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", &self.0)
+    }
+}
+
 #[test]
 fn test_new_name() {
     let mut set: HashSet<Ident> = HashSet::new();
