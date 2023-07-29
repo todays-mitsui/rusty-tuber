@@ -2,7 +2,7 @@ use combine::parser::char::{char, spaces};
 use combine::parser::choice::choice;
 #[allow(unused_imports)]
 use combine::EasyParser;
-use combine::{eof, parser, ParseError, Parser, Stream};
+use combine::{attempt, eof, parser, ParseError, Parser, Stream};
 
 use crate::command::Command;
 use crate::function::Func;
@@ -10,20 +10,17 @@ use crate::identifier::Ident;
 use crate::parser::expression::expr;
 use crate::parser::identifier::identifier;
 
-// pub fn command<Input>() -> impl Parser<Input, Output = Command>
-// where
-//     Input: Stream<Token = char>,
-//     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
-//     <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
-//         From<::std::num::ParseIntError>,
-// {
-//     choice((
-//         update(),
-//         eval(),
-//         info(),
-//         global(),
-//     )).skip(spaces()).skip(eof())
-// }
+pub fn command<Input>() -> impl Parser<Input, Output = Command>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+        From<::std::num::ParseIntError>,
+{
+    choice((attempt(update()), eval(), attempt(info()), global()))
+        .skip(spaces())
+        .skip(eof())
+}
 
 // ========================================================================== //
 
@@ -113,53 +110,53 @@ mod tests {
     use crate::command::Command;
     use crate::expression::Expr;
 
-    // #[test]
-    // fn test_command() {
-    //     assert_eq!(
-    //         command().easy_parse("f=g"),
-    //         Ok((
-    //             Command::Update("f".into(), Func::new(vec![], "g".into())),
-    //             ""
-    //         ))
-    //     );
+    #[test]
+    fn test_command() {
+        assert_eq!(
+            command().easy_parse("f=g"),
+            Ok((
+                Command::Update("f".into(), Func::new(vec![], "g".into())),
+                ""
+            ))
+        );
 
-    //     assert_eq!(
-    //         command().easy_parse("`ix = x"),
-    //         Ok((
-    //             Command::Update("i".into(), Func::new(vec!["x".into()], "x".into())),
-    //             ""
-    //         ))
-    //     );
+        assert_eq!(
+            command().easy_parse("`ix = x"),
+            Ok((
+                Command::Update("i".into(), Func::new(vec!["x".into()], "x".into())),
+                ""
+            ))
+        );
 
-    //     assert_eq!(
-    //         command().easy_parse("```sxyz = ``xz`yz"),
-    //         Ok((
-    //             Command::Update(
-    //                 "s".into(),
-    //                 Func::new(
-    //                     vec!["x".into(), "y".into(), "z".into()],
-    //                     Expr::a(
-    //                         Expr::a("x".into(), "z".into()),
-    //                         Expr::a("y".into(), "z".into())
-    //                     )
-    //                 )
-    //             ),
-    //             ""
-    //         ))
-    //     );
+        assert_eq!(
+            command().easy_parse("```sxyz = ``xz`yz"),
+            Ok((
+                Command::Update(
+                    "s".into(),
+                    Func::new(
+                        vec!["x".into(), "y".into(), "z".into()],
+                        Expr::a(
+                            Expr::a("x".into(), "z".into()),
+                            Expr::a("y".into(), "z".into())
+                        )
+                    )
+                ),
+                ""
+            ))
+        );
 
-    //     assert_eq!(
-    //         command().easy_parse("`ab"),
-    //         Ok((Command::Eval(Expr::a("a".into(), "b".into())), ""))
-    //     );
+        assert_eq!(
+            command().easy_parse("`ab"),
+            Ok((Command::Eval(Expr::a("a".into(), "b".into())), ""))
+        );
 
-    //     assert_eq!(
-    //         command().easy_parse("? a"),
-    //         Ok((Command::Info("a".into()), ""))
-    //     );
+        assert_eq!(
+            command().easy_parse("? a"),
+            Ok((Command::Info("a".into()), ""))
+        );
 
-    //     assert_eq!(command().easy_parse("?"), Ok((Command::Global, "")));
-    // }
+        assert_eq!(command().easy_parse("?"), Ok((Command::Global, "")));
+    }
 
     #[test]
     fn test_def() {
