@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 regex = "*"
 combine = "4.6.6"
+clap = { version = "4.3.19", features = ["derive"] }
