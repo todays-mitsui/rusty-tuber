@@ -70,6 +70,16 @@ where
 
 // ========================================================================== //
 
+pub fn info<Input>() -> impl Parser<Input, Output = Command>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+{
+    spaces()
+        .skip(char('?'))
+        .with(identifier())
+        .map(Command::Info)
+}
 
 // ========================================================================== //
 
@@ -83,12 +93,18 @@ mod tests {
     fn test_def() {
         assert_eq!(
             update().easy_parse("f=g"),
-            Ok((Command::Update("f".into(), Func::new(vec![], "g".into())), ""))
+            Ok((
+                Command::Update("f".into(), Func::new(vec![], "g".into())),
+                ""
+            ))
         );
 
         assert_eq!(
             update().easy_parse("f = g"),
-            Ok((Command::Update("f".into(), Func::new(vec![], "g".into())), ""))
+            Ok((
+                Command::Update("f".into(), Func::new(vec![], "g".into())),
+                ""
+            ))
         );
 
         assert_eq!(
@@ -150,6 +166,15 @@ mod tests {
         assert_eq!(
             eval().easy_parse("`ab"),
             Ok((Command::Eval(Expr::a("a".into(), "b".into())), ""))
+        );
+    }
+
+    #[test]
+    fn test_info() {
+        assert_eq!(info().easy_parse("?a"), Ok((Command::Info("a".into()), "")));
+        assert_eq!(
+            info().easy_parse("? a"),
+            Ok((Command::Info("a".into()), ""))
         );
     }
 }
