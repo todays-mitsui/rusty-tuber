@@ -46,7 +46,7 @@ fn test_expr() {
 
 // ========================================================================== //
 
-pub fn var<Input>() -> impl Parser<Input, Output = Expr>
+fn var<Input>() -> impl Parser<Input, Output = Expr>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -65,7 +65,7 @@ fn test_var() {
 
 // ========================================================================== //
 
-pub fn symbol<Input>() -> impl Parser<Input, Output = Expr>
+fn symbol<Input>() -> impl Parser<Input, Output = Expr>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,

@@ -10,7 +10,16 @@ use crate::identifier::Ident;
 use crate::parser::expression::expr;
 use crate::parser::identifier::identifier;
 
-pub fn command<Input>() -> impl Parser<Input, Output = Command>
+pub fn parse_command(s: &str) -> Result<Command, String> {
+    command()
+        .easy_parse(s)
+        .map(|(c, _)| c)
+        .map_err(|e| format!("{}", e))
+}
+
+// ========================================================================== //
+
+fn command<Input>() -> impl Parser<Input, Output = Command>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -24,7 +33,7 @@ where
 
 // ========================================================================== //
 
-pub fn update<Input>() -> impl Parser<Input, Output = Command>
+fn update<Input>() -> impl Parser<Input, Output = Command>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -71,7 +80,7 @@ parser! {
 
 // ========================================================================== //
 
-pub fn eval<Input>() -> impl Parser<Input, Output = Command>
+fn eval<Input>() -> impl Parser<Input, Output = Command>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -83,7 +92,7 @@ where
 
 // ========================================================================== //
 
-pub fn info<Input>() -> impl Parser<Input, Output = Command>
+fn info<Input>() -> impl Parser<Input, Output = Command>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -94,7 +103,7 @@ where
         .map(Command::Info)
 }
 
-pub fn global<Input>() -> impl Parser<Input, Output = Command>
+fn global<Input>() -> impl Parser<Input, Output = Command>
 where
     Input: Stream<Token = char>,
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
@@ -109,6 +118,44 @@ mod tests {
     use super::*;
     use crate::command::Command;
     use crate::expression::Expr;
+
+    #[test]
+    fn test_parse_command() {
+        assert_eq!(
+            parse_command("f=g"),
+            Ok(Command::Update("f".into(), Func::new(vec![], "g".into())))
+        );
+
+        assert_eq!(
+            parse_command("`ix = x"),
+            Ok(Command::Update("i".into(), Func::new(vec!["x".into()], "x".into())))
+        );
+
+        assert_eq!(
+            parse_command("```sxyz = ``xz`yz"),
+            Ok(Command::Update(
+                "s".into(),
+                Func::new(
+                    vec!["x".into(), "y".into(), "z".into()],
+                    Expr::a(
+                        Expr::a("x".into(), "z".into()),
+                        Expr::a("y".into(), "z".into())
+                    )
+                )
+            ))
+        );
+
+        assert_eq!(
+            parse_command("`ab"),
+            Ok(Command::Eval(Expr::a("a".into(), "b".into())))
+        );
+
+        assert_eq!(parse_command("? a"), Ok(Command::Info("a".into())));
+
+        assert_eq!(parse_command("?"), Ok(Command::Global));
+
+        assert!(parse_command("f=g h=i").is_err());
+    }
 
     #[test]
     fn test_command() {
