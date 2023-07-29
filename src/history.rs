@@ -1,6 +1,8 @@
 extern crate glob;
+use crate::command::Command;
 use glob::glob;
 use home_dir::*;
+use std::io::Write;
 use std::path::Path;
 use ulid::Ulid;
 
@@ -27,4 +29,23 @@ pub fn open_or_create_history_file() -> std::fs::File {
             std::fs::File::create(dir.join(filename)).expect("ファイルの作成に失敗しました")
         }
     };
+}
+
+struct History {
+    history: Vec<Command>,
+    writer: std::io::BufWriter<std::fs::File>,
+}
+
+impl History {
+    fn new(file: std::fs::File) -> History {
+        History {
+            history: vec![],
+            writer: std::io::BufWriter::new(file),
+        }
+    }
+
+    fn push(&mut self, command: Command) {
+        write!(self.writer, "{}\n", command).expect("ファイルの書き込みに失敗しました");
+        self.history.push(command);
+    }
 }

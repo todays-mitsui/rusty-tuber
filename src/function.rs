@@ -30,6 +30,14 @@ impl Func {
         }
         body
     }
+
+    pub fn params(&self) -> &Vec<Ident> {
+        &self.params
+    }
+
+    pub fn body(&self) -> &Expr {
+        &self.body
+    }
 }
 
 /// i := ^x.x

@@ -1,3 +1,5 @@
+mod display;
+
 use crate::expression::Expr;
 use crate::function::Func;
 use crate::identifier::Ident;
