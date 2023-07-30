@@ -9,7 +9,7 @@ mod parser;
 
 use clap::Parser;
 
-use history::open_or_create_history_file;
+use history::{open_or_create_history_file, History};
 
 /// An interpreter that evaluates λ-calculations step by step.
 #[derive(Parser, Debug)]
@@ -22,6 +22,6 @@ struct Args {
 fn main() {
     let args = Args::parse();
     println!("{}", args.command);
-
     let file = open_or_create_history_file();
+    let history = History::new(file.try_clone().unwrap(), file);
 }

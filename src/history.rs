@@ -1,8 +1,9 @@
 extern crate glob;
 use crate::command::Command;
+use crate::parser::command::parse_command;
 use glob::glob;
 use home_dir::*;
-use std::io::Write;
+use std::io::{self, BufRead, Read, Write};
 use std::path::Path;
 use ulid::Ulid;
 
@@ -15,8 +16,6 @@ pub fn open_or_create_history_file() -> std::fs::File {
         .expect("glob pattern error")
         .map(|e| e.unwrap())
         .collect::<Vec<_>>();
-
-    println!("{:?}", file_names);
 
     return match file_names.iter().max() {
         Some(f) => std::fs::File::open(f).expect("ファイルの読み込みに失敗しました"),
@@ -31,21 +30,53 @@ pub fn open_or_create_history_file() -> std::fs::File {
     };
 }
 
-struct History {
+pub struct History<W: Write> {
     history: Vec<Command>,
-    writer: std::io::BufWriter<std::fs::File>,
+    writer: W,
 }
 
-impl History {
-    fn new(file: std::fs::File) -> History {
+impl<W: Write> History<W> {
+    pub fn new(reader: impl Read, writer: W) -> Self {
+        let mut histories = Vec::new();
+        for line in std::io::BufReader::new(reader).lines() {
+            let command = parse_command(&line.unwrap()).unwrap();
+            histories.push(command);
+        }
+
         History {
-            history: vec![],
-            writer: std::io::BufWriter::new(file),
+            history: histories,
+            writer,
         }
     }
 
-    fn push(&mut self, command: Command) {
-        write!(self.writer, "{}\n", command).expect("ファイルの書き込みに失敗しました");
+    pub fn push(&mut self, command: Command) {
+        writeln!(self.writer, "{}", command).expect("ファイルの書き込みに失敗しました");
         self.history.push(command);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::command::Command;
+    use crate::function::Func;
+
+    #[test]
+    fn test_history() {
+        let input = io::empty();
+        let output: Vec<u8> = Vec::new();
+        let mut history = History::new(input, output);
+
+        history.push(Command::Update(
+            "i".into(),
+            Func::new(vec!["x".into()], "x".into()),
+        ));
+        assert_eq!(String::from_utf8(history.writer.clone()).unwrap(), "`ix = x\n");
+
+        history.push(Command::Info("i".into()));
+        assert_eq!(
+            String::from_utf8(history.writer.clone()).unwrap(),
+            "`ix = x\n? i\n"
+        );
     }
 }
