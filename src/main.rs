@@ -1,4 +1,5 @@
 mod command;
+mod engine;
 mod environment;
 mod evaluate;
 mod expression;
@@ -9,7 +10,10 @@ mod parser;
 
 use clap::Parser;
 
+use engine::Engine;
+use environment::Env;
 use history::{open_or_create_history_file, History};
+use parser::command::parse_command;
 
 /// An interpreter that evaluates λ-calculations step by step.
 #[derive(Parser, Debug)]
@@ -21,7 +25,15 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    println!("{}", args.command);
     let file = open_or_create_history_file();
-    let history = History::new(file.try_clone().unwrap(), file);
+    let mut history = History::new(file.try_clone().unwrap(), file);
+    let env = history.build_env(Env::default());
+    let command = args.command;
+    match parse_command(&command) {
+        Ok(command) => {
+            Engine::new(env).run(&command);
+            history.push(command);
+        }
+        Err(e) => println!("{}", e),
+    }
 }

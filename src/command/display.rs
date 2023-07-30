@@ -8,11 +8,11 @@ use crate::identifier::Ident;
 impl Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Command::Del(i) => write!(f, "{} = {}", i, i),
             Command::Update(i, func) => write!(f, "{}", to_string(i, func)),
             Command::Eval(e) => write!(f, "{}", e),
             Command::Info(i) => write!(f, "? {}", i),
             Command::Global => write!(f, "?"),
-            _ => panic!("not implemented"),
         }
     }
 }
@@ -29,6 +29,11 @@ fn to_string(i: &Ident, f: &Func) -> String {
 mod tests {
     use super::*;
     use crate::expression::Expr;
+
+    #[test]
+    fn test_del() {
+        assert_eq!(Command::Del("i".into()).to_string(), "i = i");
+    }
 
     #[test]
     fn test_update() {

@@ -31,10 +31,12 @@ impl Env {
         self.get(id).map(|f| f.arity())
     }
 
+    #[allow(dead_code)]
     pub fn del(&mut self, id: &Ident) {
         self.env.remove(id);
     }
 
+    #[allow(dead_code)]
     pub fn count(&self) -> usize {
         self.env.len()
     }

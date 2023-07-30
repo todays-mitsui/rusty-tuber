@@ -5,6 +5,7 @@ use combine::EasyParser;
 use combine::{attempt, eof, parser, ParseError, Parser, Stream};
 
 use crate::command::Command;
+use crate::expression::Expr;
 use crate::function::Func;
 use crate::identifier::Ident;
 use crate::parser::expression::expr;
@@ -43,7 +44,10 @@ where
     def_lhs()
         .skip(spaces().with(char('=')))
         .and(expr())
-        .map(|((i, is), rhs)| Command::Update(i, Func::new(is, rhs)))
+        .map(|((i, is), rhs)| match rhs {
+            Expr::Variable(j) if is.is_empty() && i == j => return Command::Del(i),
+            _ => Command::Update(i, Func::new(is, rhs)),
+        })
 }
 
 fn def_lhs<Input>() -> impl Parser<Input, Output = (Ident, Vec<Ident>)>

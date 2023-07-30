@@ -26,6 +26,7 @@ impl Expr {
     }
 
     /// シンボルを作る
+    #[allow(dead_code)]
     pub fn s(label: &str) -> Expr {
         Expr::Symbol(Ident::new(label))
     }
