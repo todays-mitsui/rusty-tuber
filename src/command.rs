@@ -4,6 +4,7 @@ use crate::expression::Expr;
 use crate::function::Func;
 use crate::identifier::Ident;
 
+// TODO: Func や Expr を Box に入れたほうがいいかも
 #[derive(Debug, PartialEq)]
 pub enum Command {
     Del(Ident),            // 関数を削除
