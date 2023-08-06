@@ -4,12 +4,13 @@ use crate::environment::Env;
 use crate::parser::command::parse_command;
 use glob::glob;
 use home_dir::*;
+use std::fs::File;
 #[allow(unused_imports)]
 use std::io::{self, BufRead, Read, Write};
 use std::path::Path;
 use ulid::Ulid;
 
-pub fn open_or_create_history_file() -> std::fs::File {
+pub fn open_or_create_history_file() -> File {
     let dir = Path::new("~/.tuber")
         .expand_home()
         .expect("ホームディレクトリが見つかりませんでした");
@@ -32,48 +33,38 @@ pub fn open_or_create_history_file() -> std::fs::File {
                 std::fs::create_dir(&dir).expect("ディレクトリの作成に失敗しました");
             }
             let filename = format!("{}.txt", Ulid::new().to_string());
-            std::fs::File::create(dir.join(filename)).expect("ファイルの作成に失敗しました")
+            File::create(dir.join(filename)).expect("ファイルの作成に失敗しました")
         }
     };
 }
 
-pub struct History<W: Write> {
-    history: Vec<Command>,
-    writer: W,
+pub fn rebuild_env(file: &File, env: Option<Env>) -> Env {
+    let mut env = env.unwrap_or(Env::new());
+
+    for line in std::io::BufReader::new(file).lines() {
+        let line = line.unwrap();
+        if line.trim().is_empty() {
+            continue;
+        }
+        let command = parse_command(&line).unwrap();
+        match command {
+            Command::Update(i, f) => env.def(i.clone(), f.clone()),
+            _ => (),
+        }
+    }
+
+    env
 }
 
-impl<W: Write> History<W> {
-    pub fn new(reader: impl Read, writer: W) -> Self {
-        let mut histories = Vec::new();
-        for line in std::io::BufReader::new(reader).lines() {
-            let line = line.unwrap();
-            if line.trim().is_empty() {
-                continue;
-            }
-            let command = parse_command(&line).unwrap();
-            histories.push(command);
-        }
+pub struct Logger<W: Write>(W);
 
-        History {
-            history: histories,
-            writer,
-        }
+impl<W: Write> Logger<W> {
+    pub fn new(writer: W) -> Self {
+        Logger(writer)
     }
 
-    pub fn push(&mut self, command: Command) {
-        writeln!(self.writer, "{}", command).expect("ファイルの書き込みに失敗しました");
-        self.history.push(command);
-    }
-
-    pub fn build_env(&self, env: Env) -> Env {
-        let mut env = env.clone();
-        for command in &self.history {
-            match command {
-                Command::Update(i, f) => env.def(i.clone(), f.clone()),
-                _ => (),
-            }
-        }
-        env
+    pub fn push(&mut self, command: &Command) {
+        writeln!(self.0, "{}", command).expect("ログの書き込みに失敗しました");
     }
 }
 
@@ -84,23 +75,19 @@ mod tests {
     use crate::function::Func;
 
     #[test]
-    fn test_history() {
-        let input = io::empty();
-        let output: Vec<u8> = Vec::new();
-        let mut history = History::new(input, output);
+    fn test_logger() {
+        let dist: Vec<u8> = Vec::new();
+        let mut logger = Logger::new(dist);
 
-        history.push(Command::Update(
+        logger.push(&Command::Update(
             "i".into(),
             Func::new(vec!["x".into()], "x".into()),
         ));
-        assert_eq!(
-            String::from_utf8(history.writer.clone()).unwrap(),
-            "`ix = x\n"
-        );
+        assert_eq!(String::from_utf8(logger.0.clone()).unwrap(), "`ix = x\n");
 
-        history.push(Command::Info("i".into()));
+        logger.push(&Command::Info("i".into()));
         assert_eq!(
-            String::from_utf8(history.writer.clone()).unwrap(),
+            String::from_utf8(logger.0.clone()).unwrap(),
             "`ix = x\n? i\n"
         );
     }

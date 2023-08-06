@@ -11,8 +11,7 @@ mod parser;
 use clap::Parser;
 
 use engine::Engine;
-use environment::Env;
-use history::{open_or_create_history_file, History};
+use history::{open_or_create_history_file, rebuild_env, Logger};
 use parser::command::parse_command;
 
 /// An interpreter that evaluates λ-calculations step by step.
@@ -26,13 +25,13 @@ struct Args {
 fn main() {
     let args = Args::parse();
     let file = open_or_create_history_file();
-    let mut history = History::new(file.try_clone().unwrap(), file);
-    let env = history.build_env(Env::default());
+    let env = rebuild_env(&file, None);
+    let mut logger = Logger::new(file);
     let command = args.command;
     match parse_command(&command) {
         Ok(command) => {
+            logger.push(&command);
             Engine::new(env).run(&command);
-            history.push(command);
         }
         Err(e) => println!("{}", e),
     }
