@@ -31,7 +31,7 @@ fn main() {
     match parse_command(&command) {
         Ok(command) => {
             logger.push(&command);
-            Engine::new(env).run(&command);
+            Engine::new(env).run(command);
         }
         Err(e) => println!("{}", e),
     }
