@@ -1,6 +1,7 @@
 mod apply;
 mod display;
 mod substitute;
+mod unlambda;
 
 use crate::identifier::Ident;
 

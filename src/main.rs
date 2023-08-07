@@ -24,10 +24,12 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
+    let command = args.command;
+
     let file = open_or_create_history_file();
     let env = rebuild_env(&file, None);
     let mut logger = Logger::new(file);
-    let command = args.command;
+
     match parse_command(&command) {
         Ok(command) => {
             logger.push(&command);
