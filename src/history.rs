@@ -6,7 +6,7 @@ use glob::glob;
 use home_dir::*;
 use std::fs::File;
 #[allow(unused_imports)]
-use std::io::{self, BufRead, Read, Write};
+use std::io::{self, BufRead, Write};
 use std::path::Path;
 use ulid::Ulid;
 
