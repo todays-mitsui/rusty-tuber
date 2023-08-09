@@ -1,3 +1,4 @@
+use crate::expression::free_vars::free_vars;
 use crate::expression::Expr;
 use crate::identifier::Ident;
 
@@ -16,10 +17,15 @@ impl Expr {
             Expr::Variable(id) if &id == param => "i".into(),
             Expr::Variable(id) => Expr::a("k".into(), Expr::Variable(id)),
             Expr::Symbol(_) => self,
-            Expr::Apply { lhs, rhs } => Expr::a(
-                Expr::a("s".into(), lhs.unlambda_(param)),
-                rhs.unlambda_(param),
-            ),
+            Expr::Apply { lhs, rhs } => match rhs.as_ref() {
+                Expr::Variable(id) if id == param && !free_vars(lhs.as_ref()).contains(param) => {
+                    *lhs
+                }
+                _ => Expr::a(
+                    Expr::a("s".into(), lhs.unlambda_(param)),
+                    rhs.unlambda_(param),
+                ),
+            },
             Expr::Lambda { param: inner, body } => body.unlambda_(&inner).unlambda_(param),
         }
     }
@@ -37,16 +43,17 @@ mod tests {
             Expr::a("x".into(), "y".into()).unlambda(),
             Expr::a("x".into(), "y".into())
         );
-        assert_eq!(
-            Expr::l("x".into(), "x".into()).unlambda(),
-            "i".into()
-        );
+        assert_eq!(Expr::l("x".into(), "x".into()).unlambda(), "i".into());
         assert_eq!(
             Expr::l("x".into(), "y".into()).unlambda(),
             Expr::a("k".into(), "y".into())
         );
         assert_eq!(
-            Expr::l("x".into(), Expr::l("y".into(), Expr::a("x".into(), "y".into()))).unlambda(),
+            Expr::l(
+                "x".into(),
+                Expr::l("y".into(), Expr::a("x".into(), "y".into()))
+            )
+            .unlambda(),
             "i".into()
         );
     }
