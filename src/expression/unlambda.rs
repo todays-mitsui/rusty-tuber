@@ -24,3 +24,30 @@ impl Expr {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_unlambda() {
+        assert_eq!(Expr::Variable("x".into()).unlambda(), "x".into());
+        assert_eq!(Expr::Symbol("x".into()).unlambda(), ":x".into());
+        assert_eq!(
+            Expr::a("x".into(), "y".into()).unlambda(),
+            Expr::a("x".into(), "y".into())
+        );
+        assert_eq!(
+            Expr::l("x".into(), "x".into()).unlambda(),
+            "i".into()
+        );
+        assert_eq!(
+            Expr::l("x".into(), "y".into()).unlambda(),
+            Expr::a("k".into(), "y".into())
+        );
+        assert_eq!(
+            Expr::l("x".into(), Expr::l("y".into(), Expr::a("x".into(), "y".into()))).unlambda(),
+            "i".into()
+        );
+    }
+}
