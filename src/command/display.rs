@@ -13,6 +13,7 @@ impl Display for Command {
             Command::Eval(e) => write!(f, "{}", e),
             Command::Info(i) => write!(f, "? {}", i),
             Command::Global => write!(f, "?"),
+            Command::Unlambda(e) => write!(f, "?? {}", e),
         }
     }
 }

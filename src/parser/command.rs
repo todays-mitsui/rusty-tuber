@@ -1,4 +1,4 @@
-use combine::parser::char::{char, spaces};
+use combine::parser::char::{char, spaces, string};
 use combine::parser::choice::choice;
 #[allow(unused_imports)]
 use combine::EasyParser;
@@ -27,9 +27,15 @@ where
     <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
         From<::std::num::ParseIntError>,
 {
-    choice((attempt(update()), eval(), attempt(info()), global()))
-        .skip(spaces())
-        .skip(eof())
+    choice((
+        attempt(update()),
+        eval(),
+        attempt(unlambda()),
+        attempt(info()),
+        global(),
+    ))
+    .skip(spaces())
+    .skip(eof())
 }
 
 // ========================================================================== //
@@ -113,6 +119,21 @@ where
     Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
 {
     spaces().skip(char('?')).map(|_| Command::Global)
+}
+
+// ========================================================================== //
+
+fn unlambda<Input>() -> impl Parser<Input, Output = Command>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+        From<::std::num::ParseIntError>,
+{
+    spaces()
+        .skip(string("??"))
+        .with(expr())
+        .map(Command::Unlambda)
 }
 
 // ========================================================================== //
@@ -304,5 +325,13 @@ mod tests {
     #[test]
     fn test_global() {
         assert_eq!(global().easy_parse("?"), Ok((Command::Global, "")));
+    }
+
+    #[test]
+    fn test_unlambda() {
+        assert_eq!(
+            unlambda().easy_parse("??^x.x"),
+            Ok((Command::Unlambda(Expr::l("x".into(), "x".into())), ""))
+        );
     }
 }

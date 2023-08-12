@@ -14,6 +14,7 @@ pub enum Command {
     // EvalLast(Expr),        // β変結果のみ表示
     // EvalHead(usize, Expr), // β変換列の先頭のみ表示
     // EvalTail(usize, Expr), // β変換列の末尾のみ表示
-    Info(Ident), // Global から定義済み関数を検索
-    Global,      // Global 全体を表示
+    Info(Ident),    // Global から定義済み関数を検索
+    Global,         // Global 全体を表示
+    Unlambda(Expr), // Expr からラムダ抽象を除去する
 }
