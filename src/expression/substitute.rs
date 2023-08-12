@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
+use crate::expression::free_vars::{free_vars, FreeVars};
 use crate::expression::Expr;
 use crate::identifier::Ident;
 
-type FreeVars = HashSet<Ident>;
 type BoundVars = HashSet<Ident>;
 
 impl Expr {
@@ -45,11 +45,12 @@ impl Expr {
     /// );
     /// ```
     pub fn substitute(self, param: &Ident, arg: &Expr) -> Expr {
-        let mut vars: FreeVars = HashSet::new();
-        self.substitute_impl(param, arg, &arg.free_vars(), &mut vars)
+        let mut vars: BoundVars = HashSet::new();
+        let free_vars = free_vars(&arg);
+        self.substitute_impl(param, arg, &free_vars, &mut vars)
     }
 
-    fn substitute_impl(
+    fn substitute_impl<'a>(
         self,
         param: &Ident,
         arg: &Expr,
@@ -120,37 +121,6 @@ impl Expr {
                 // 自由変数としての old のみ new に置き換えたい
                 // old が束縛変数の識別子と一致する場合、そのラムダ抽象の中に自由変数としての old は
                 // 存在しないことが確定するので、その時点で再起を打ち切っていい
-            }
-        }
-    }
-}
-
-impl Expr {
-    /// 式の中に現れる自由変数の集合を取得する
-    fn free_vars(&self) -> FreeVars {
-        let mut vars: FreeVars = HashSet::new();
-        self.free_vars_impl(&mut vars);
-        vars
-    }
-
-    fn free_vars_impl(&self, vars: &mut FreeVars) {
-        match self {
-            Expr::Variable(id) => {
-                vars.insert(id.clone());
-            }
-            Expr::Symbol(_) => {}
-            Expr::Apply { lhs, rhs } => {
-                lhs.free_vars_impl(vars);
-                rhs.free_vars_impl(vars);
-            }
-            Expr::Lambda { param, body } => {
-                let mut body_vars = HashSet::new();
-                body.free_vars_impl(&mut body_vars);
-                for var in body_vars {
-                    if &var != param {
-                        vars.insert(var);
-                    }
-                }
             }
         }
     }

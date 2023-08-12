@@ -2,7 +2,7 @@ use crate::expression::Expr;
 use crate::identifier::Ident;
 use std::collections::HashSet;
 
-type FreeVars<'a> = HashSet<&'a Ident>;
+pub type FreeVars<'a> = HashSet<&'a Ident>;
 
 pub fn free_vars(expr: &Expr) -> FreeVars {
     let mut vars: FreeVars = HashSet::new();
