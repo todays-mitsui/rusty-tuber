@@ -36,6 +36,11 @@ impl Engine {
                 None => println!("{} = {}", i, i),
             },
 
+            Command::Unlambda(e) => {
+                println!("{}", e);
+                println!("== {}", e.unlambda());
+            }
+
             _ => panic!("not implemented"),
         }
     }
