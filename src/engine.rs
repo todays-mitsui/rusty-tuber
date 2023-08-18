@@ -17,8 +17,8 @@ impl Engine {
                 self.env.del(&i);
             }
 
-            Command::Update(i, f) => {
-                self.env.def(i, f);
+            Command::Update(f) => {
+                self.env.def(f);
             }
 
             Command::Eval(e) => {
@@ -32,7 +32,7 @@ impl Engine {
 
             Command::Info(i) => match self.env.get(&i) {
                 // TODO: ちゃんとする
-                Some(f) => println!("{}", Command::Update(i, f.clone())),
+                Some(f) => println!("{}", Command::Update(f.clone())),
                 None => println!("{} = {}", i, i),
             },
 

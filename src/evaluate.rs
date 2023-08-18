@@ -159,9 +159,10 @@ mod tests {
     use crate::function::Func;
 
     fn setup() -> Env {
-        let i = Func::new(vec!["x".into()], "x".into());
-        let k = Func::new(vec!["x".into(), "y".into()], "x".into());
+        let i = Func::new("i".into(), vec!["x".into()], "x".into());
+        let k = Func::new("k".into(), vec!["x".into(), "y".into()], "x".into());
         let s = Func::new(
+            "s".into(),
             vec!["x".into(), "y".into(), "z".into()],
             Expr::a(
                 Expr::a("x".into(), "z".into()),
@@ -169,16 +170,10 @@ mod tests {
             ),
         );
 
-        let _true = Func::new(vec![], Expr::a("k".into(), "i".into()));
-        let _false = Func::new(vec![], "k".into());
+        let _true = Func::new("TRUE".into(), vec![], Expr::a("k".into(), "i".into()));
+        let _false = Func::new("FALSE".into(), vec![], "k".into());
 
-        Env::from(vec![
-            ("i".into(), i),
-            ("k".into(), k),
-            ("s".into(), s),
-            ("true".into(), _true),
-            ("false".into(), _false),
-        ])
+        Env::from(vec![i, k, s, _true, _false])
     }
 
     #[test]
@@ -228,7 +223,7 @@ mod tests {
     fn test_eval_steps_func_true_1() {
         let env = setup();
 
-        let expr: Expr = "true".into();
+        let expr: Expr = "TRUE".into();
 
         let mut steps = EvalSteps::new(expr, &env);
 
@@ -239,7 +234,7 @@ mod tests {
     fn test_eval_steps_func_true_2() {
         let env = setup();
 
-        let expr = Expr::a(":a".into(), "true".into());
+        let expr = Expr::a(":a".into(), "TRUE".into());
 
         let mut steps = EvalSteps::new(expr, &env);
 
@@ -250,7 +245,7 @@ mod tests {
     fn test_eval_steps_func_true_3() {
         let env = setup();
 
-        let expr = Expr::a(Expr::a("true".into(), ":a".into()), ":b".into());
+        let expr = Expr::a(Expr::a("TRUE".into(), ":a".into()), ":b".into());
 
         let mut steps = EvalSteps::new(expr, &env);
 

@@ -48,7 +48,7 @@ pub fn rebuild_env(file: &File, env: Option<Env>) -> Env {
         }
         let command = parse_command(&line).unwrap();
         match command {
-            Command::Update(i, f) => env.def(i.clone(), f.clone()),
+            Command::Update(f) => env.def(f.clone()),
             _ => (),
         }
     }
@@ -79,10 +79,11 @@ mod tests {
         let dist: Vec<u8> = Vec::new();
         let mut logger = Logger::new(dist);
 
-        logger.push(&Command::Update(
+        logger.push(&Command::Update(Func::new(
             "i".into(),
-            Func::new(vec!["x".into()], "x".into()),
-        ));
+            vec!["x".into()],
+            "x".into(),
+        )));
         assert_eq!(String::from_utf8(logger.0.clone()).unwrap(), "`ix = x\n");
 
         logger.push(&Command::Info("i".into()));

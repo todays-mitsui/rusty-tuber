@@ -9,7 +9,13 @@ impl Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Command::Del(i) => write!(f, "{} = {}", i, i),
-            Command::Update(i, func) => write!(f, "{}", to_string(i, func)),
+            Command::Update(func) => {
+                let mut lhs = Expr::Variable(func.name().clone());
+                for i in func.params() {
+                    lhs = Expr::a(lhs, Expr::Variable(i.clone()));
+                }
+                write!(f, "{} = {}", lhs, func.body())
+            }
             Command::Eval(e) => write!(f, "{}", e),
             Command::Info(i) => write!(f, "? {}", i),
             Command::Global => write!(f, "?"),
@@ -39,30 +45,29 @@ mod tests {
     #[test]
     fn test_update() {
         assert_eq!(
-            Command::Update("i".into(), Func::new(vec!["x".into()], "x".into())).to_string(),
+            Command::Update(Func::new("i".into(), vec!["x".into()], "x".into())).to_string(),
             "`ix = x"
         );
 
         assert_eq!(
-            Command::Update(
+            Command::Update(Func::new(
                 "k".into(),
-                Func::new(vec!["x".into(), "y".into()], "x".into())
-            )
+                vec!["x".into(), "y".into()],
+                "x".into()
+            ))
             .to_string(),
             "``kxy = x"
         );
 
         assert_eq!(
-            Command::Update(
+            Command::Update(Func::new(
                 "s".into(),
-                Func::new(
-                    vec!["x".into(), "y".into(), "z".into()],
-                    Expr::a(
-                        Expr::a("x".into(), "z".into()),
-                        Expr::a("y".into(), "z".into())
-                    )
+                vec!["x".into(), "y".into(), "z".into()],
+                Expr::a(
+                    Expr::a("x".into(), "z".into()),
+                    Expr::a("y".into(), "z".into())
                 )
-            )
+            ))
             .to_string(),
             "```sxyz = ``xz`yz"
         );

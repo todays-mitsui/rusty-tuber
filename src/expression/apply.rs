@@ -32,17 +32,16 @@ mod tests {
 
     #[test]
     fn test_arity() {
-        let f0 = Func::new(vec![], ":a".into());
-        let f1 = Func::new(vec!["x".into()], ":a".into());
-        let f2 = Func::new(vec!["x".into(), "y".into()], ":a".into());
-        let f3 = Func::new(vec!["x".into(), "y".into(), "z".into()], ":a".into());
+        let f0 = Func::new("F0".into(), vec![], ":a".into());
+        let f1 = Func::new("F1".into(), vec!["x".into()], ":a".into());
+        let f2 = Func::new("F2".into(), vec!["x".into(), "y".into()], ":a".into());
+        let f3 = Func::new(
+            "F3".into(),
+            vec!["x".into(), "y".into(), "z".into()],
+            ":a".into(),
+        );
 
-        let env = Env::from(vec![
-            ("f0".into(), f0),
-            ("f1".into(), f1),
-            ("f2".into(), f2),
-            ("f3".into(), f3),
-        ]);
+        let env = Env::from(vec![f0, f1, f2, f3]);
 
         // シンボルは関数が紐づくことがない、arity は定義されない
         assert_eq!(Expr::s("a").arity(&env), None);
@@ -57,10 +56,10 @@ mod tests {
         assert_eq!(Expr::v("x").arity(&env), None);
 
         // 定義済み関数と紐づく自由変数はその関数の arity を返す
-        assert_eq!(Expr::v("f0").arity(&env), Some(0));
-        assert_eq!(Expr::v("f1").arity(&env), Some(1));
-        assert_eq!(Expr::v("f2").arity(&env), Some(2));
-        assert_eq!(Expr::v("f3").arity(&env), Some(3));
+        assert_eq!(Expr::v("F0").arity(&env), Some(0));
+        assert_eq!(Expr::v("F1").arity(&env), Some(1));
+        assert_eq!(Expr::v("F2").arity(&env), Some(2));
+        assert_eq!(Expr::v("F3").arity(&env), Some(3));
     }
 
     #[test]

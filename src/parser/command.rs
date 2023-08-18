@@ -52,7 +52,7 @@ where
         .and(expr())
         .map(|((i, is), rhs)| match rhs {
             Expr::Variable(j) if is.is_empty() && i == j => return Command::Del(i),
-            _ => Command::Update(i, Func::new(is, rhs)),
+            _ => Command::Update(Func::new(i, is, rhs)),
         })
 }
 
@@ -148,29 +148,28 @@ mod tests {
     fn test_parse_command() {
         assert_eq!(
             parse_command("f=g"),
-            Ok(Command::Update("f".into(), Func::new(vec![], "g".into())))
+            Ok(Command::Update(Func::new("f".into(), vec![], "g".into())))
         );
 
         assert_eq!(
             parse_command("`ix = x"),
-            Ok(Command::Update(
+            Ok(Command::Update(Func::new(
                 "i".into(),
-                Func::new(vec!["x".into()], "x".into())
-            ))
+                vec!["x".into()],
+                "x".into()
+            )))
         );
 
         assert_eq!(
             parse_command("```sxyz = ``xz`yz"),
-            Ok(Command::Update(
+            Ok(Command::Update(Func::new(
                 "s".into(),
-                Func::new(
-                    vec!["x".into(), "y".into(), "z".into()],
-                    Expr::a(
-                        Expr::a("x".into(), "z".into()),
-                        Expr::a("y".into(), "z".into())
-                    )
+                vec!["x".into(), "y".into(), "z".into()],
+                Expr::a(
+                    Expr::a("x".into(), "z".into()),
+                    Expr::a("y".into(), "z".into())
                 )
-            ))
+            )))
         );
 
         assert_eq!(
@@ -190,7 +189,7 @@ mod tests {
         assert_eq!(
             command().easy_parse("f=g"),
             Ok((
-                Command::Update("f".into(), Func::new(vec![], "g".into())),
+                Command::Update(Func::new("f".into(), vec![], "g".into())),
                 ""
             ))
         );
@@ -198,7 +197,7 @@ mod tests {
         assert_eq!(
             command().easy_parse("`ix = x"),
             Ok((
-                Command::Update("i".into(), Func::new(vec!["x".into()], "x".into())),
+                Command::Update(Func::new("i".into(), vec!["x".into()], "x".into())),
                 ""
             ))
         );
@@ -206,16 +205,14 @@ mod tests {
         assert_eq!(
             command().easy_parse("```sxyz = ``xz`yz"),
             Ok((
-                Command::Update(
+                Command::Update(Func::new(
                     "s".into(),
-                    Func::new(
-                        vec!["x".into(), "y".into(), "z".into()],
-                        Expr::a(
-                            Expr::a("x".into(), "z".into()),
-                            Expr::a("y".into(), "z".into())
-                        )
+                    vec!["x".into(), "y".into(), "z".into()],
+                    Expr::a(
+                        Expr::a("x".into(), "z".into()),
+                        Expr::a("y".into(), "z".into())
                     )
-                ),
+                )),
                 ""
             ))
         );
@@ -238,7 +235,7 @@ mod tests {
         assert_eq!(
             update().easy_parse("f=g"),
             Ok((
-                Command::Update("f".into(), Func::new(vec![], "g".into())),
+                Command::Update(Func::new("f".into(), vec![], "g".into())),
                 ""
             ))
         );
@@ -246,7 +243,7 @@ mod tests {
         assert_eq!(
             update().easy_parse("f = g"),
             Ok((
-                Command::Update("f".into(), Func::new(vec![], "g".into())),
+                Command::Update(Func::new("f".into(), vec![], "g".into())),
                 ""
             ))
         );
@@ -254,7 +251,7 @@ mod tests {
         assert_eq!(
             update().easy_parse("`ix = x"),
             Ok((
-                Command::Update("i".into(), Func::new(vec!["x".into()], "x".into())),
+                Command::Update(Func::new("i".into(), vec!["x".into()], "x".into())),
                 ""
             ))
         );
@@ -262,16 +259,14 @@ mod tests {
         assert_eq!(
             update().easy_parse("```sxyz = ``xz`yz"),
             Ok((
-                Command::Update(
+                Command::Update(Func::new(
                     "s".into(),
-                    Func::new(
-                        vec!["x".into(), "y".into(), "z".into()],
-                        Expr::a(
-                            Expr::a("x".into(), "z".into()),
-                            Expr::a("y".into(), "z".into())
-                        )
+                    vec!["x".into(), "y".into(), "z".into()],
+                    Expr::a(
+                        Expr::a("x".into(), "z".into()),
+                        Expr::a("y".into(), "z".into())
                     )
-                ),
+                )),
                 ""
             ))
         );

@@ -6,13 +6,18 @@ use crate::identifier::Ident;
 /// 関数とラムダ抽象はよく似ているが、関数が 0 以上の arity を持つ点で異なる
 #[derive(Debug, Clone, PartialEq)]
 pub struct Func {
+    name: Ident,
     params: Vec<Ident>,
     body: Expr,
 }
 
 impl Func {
-    pub fn new(params: Vec<Ident>, body: Expr) -> Func {
-        Func { params, body }
+    pub fn new(name: Ident, params: Vec<Ident>, body: Expr) -> Func {
+        Func { name, params, body }
+    }
+
+    pub fn name(&self) -> &Ident {
+        &self.name
     }
 
     /// 関数の引数の個数
@@ -43,6 +48,7 @@ impl Func {
 /// i := ^x.x
 pub fn i() -> Func {
     Func {
+        name: "i".into(),
         params: vec![Ident::new("x")],
         body: Expr::v("x"),
     }
@@ -51,6 +57,7 @@ pub fn i() -> Func {
 /// k := ^x.^y.x
 pub fn k() -> Func {
     Func {
+        name: "k".into(),
         params: vec![Ident::new("x"), Ident::new("y")],
         body: Expr::v("x"),
     }
@@ -59,6 +66,7 @@ pub fn k() -> Func {
 /// s := ^x.^y.^z.``xz`yz
 pub fn s() -> Func {
     Func {
+        name: "s".into(),
         params: vec![Ident::new("x"), Ident::new("y"), Ident::new("z")],
         body: Expr::a(
             Expr::a(Expr::v("x"), Expr::v("z")),
