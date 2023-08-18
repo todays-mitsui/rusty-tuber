@@ -1,21 +1,12 @@
 use std::fmt::Display;
 
 use crate::command::Command;
-use crate::expression::Expr;
-use crate::function::Func;
-use crate::identifier::Ident;
 
 impl Display for Command {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Command::Del(i) => write!(f, "{} = {}", i, i),
-            Command::Update(func) => {
-                let mut lhs = Expr::Variable(func.name().clone());
-                for i in func.params() {
-                    lhs = Expr::a(lhs, Expr::Variable(i.clone()));
-                }
-                write!(f, "{} = {}", lhs, func.body())
-            }
+            Command::Update(func) => write!(f, "{}", func),
             Command::Eval(e) => write!(f, "{}", e),
             Command::Info(i) => write!(f, "? {}", i),
             Command::Global => write!(f, "?"),
@@ -24,18 +15,11 @@ impl Display for Command {
     }
 }
 
-fn to_string(i: &Ident, f: &Func) -> String {
-    let mut lhs = Expr::Variable(i.clone());
-    for i in f.params() {
-        lhs = Expr::a(lhs, Expr::Variable(i.clone()));
-    }
-    format!("{} = {}", lhs, f.body())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::expression::Expr;
+    use crate::function::Func;
 
     #[test]
     fn test_del() {
