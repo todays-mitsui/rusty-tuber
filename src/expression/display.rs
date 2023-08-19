@@ -10,15 +10,30 @@ impl Display for Expr {
 }
 
 #[derive(Debug, PartialEq)]
-enum Token {
-    UpperIdent(String),
-    LowerIdent(String),
+enum Ident<'a> {
+    Variable(&'a str),
+    Symbol(&'a str),
+}
+
+impl Display for Ident<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Ident::Variable(label) => write!(f, "{}", label),
+            Ident::Symbol(label) => write!(f, ":{}", label),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+enum Token<'a> {
+    UpperIdent(Ident<'a>),
+    LowerIdent(Ident<'a>),
     Apply,
     Lambda,
     Dot,
 }
 
-impl Display for Token {
+impl Display for Token<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Token::UpperIdent(i) => write!(f, "{}", i),
@@ -35,23 +50,23 @@ fn is_upper_ident(s: &str) -> bool {
     regex_upper_ident.is_match(s)
 }
 
-fn tokens(expr: &Expr) -> Vec<Token> {
+fn tokens<'a>(expr: &'a Expr) -> Vec<Token<'a>> {
     match expr {
         Expr::Variable(i) => {
-            let s = i.to_string();
-            if is_upper_ident(&s) {
-                vec![Token::UpperIdent(s)]
+            let label = i.label();
+            if is_upper_ident(label) {
+                vec![Token::UpperIdent(Ident::Variable(label))]
             } else {
-                vec![Token::LowerIdent(s)]
+                vec![Token::LowerIdent(Ident::Variable(label))]
             }
         }
 
         Expr::Symbol(i) => {
-            let s = i.to_string();
-            if is_upper_ident(&s) {
-                vec![Token::UpperIdent(format!(":{}", i))]
+            let label = i.label();
+            if is_upper_ident(label) {
+                vec![Token::UpperIdent(Ident::Symbol(label))]
             } else {
-                vec![Token::LowerIdent(format!(":{}", i))]
+                vec![Token::LowerIdent(Ident::Symbol(label))]
             }
         }
 
@@ -66,11 +81,11 @@ fn tokens(expr: &Expr) -> Vec<Token> {
         Expr::Lambda { param, body } => {
             let mut body = tokens(body);
             body.push(Token::Dot);
-            let s = param.to_string();
-            if is_upper_ident(&s) {
-                body.push(Token::UpperIdent(param.to_string()));
+            let label = param.label();
+            if is_upper_ident(label) {
+                body.push(Token::UpperIdent(Ident::Variable(label)));
             } else {
-                body.push(Token::LowerIdent(param.to_string()));
+                body.push(Token::LowerIdent(Ident::Variable(label)));
             }
             body.push(Token::Lambda);
             body
@@ -90,12 +105,12 @@ fn to_string(tokens: &mut Vec<Token>) -> String {
             _ => {
                 let t1 = tokens.pop().unwrap();
                 let t2 = tokens.pop().unwrap();
-                match (t1, t2) {
-                    (Token::UpperIdent(i1), Token::UpperIdent(i2)) => {
-                        str.push_str(format!("{} ", i1).as_str());
-                        tokens.push(Token::UpperIdent(i2));
+                match (t1, &t2) {
+                    (Token::UpperIdent(ident1), Token::UpperIdent(Ident::Variable(_))) => {
+                        str.push_str(format!("{} ", ident1).as_str());
+                        tokens.push(t2);
                     }
-                    (t1, t2) => {
+                    (t1, _) => {
                         str.push_str(format!("{}", t1).as_str());
                         tokens.push(t2);
                     }
@@ -124,31 +139,34 @@ fn test_to_string() {
     assert_eq!(Expr::a("x".into(), "Y".into()).to_string(), "`xY");
     assert_eq!(Expr::a("X".into(), "y".into()).to_string(), "`Xy");
     assert_eq!(Expr::a("X".into(), "Y".into()).to_string(), "`X Y");
+    assert_eq!(Expr::a("X".into(), ":Y".into()).to_string(), "`X:Y");
+    assert_eq!(Expr::a(":X".into(), "Y".into()).to_string(), "`:X Y");
+    assert_eq!(Expr::a(":X".into(), ":Y".into()).to_string(), "`:X:Y");
 }
 
 #[test]
 fn test_tokens() {
-    assert_eq!(tokens(&"x".into()), vec![Token::LowerIdent("x".into())]);
-    assert_eq!(tokens(&"FOO".into()), vec![Token::UpperIdent("FOO".into())]);
-    assert_eq!(tokens(&":a".into()), vec![Token::LowerIdent(":a".into())]);
+    assert_eq!(tokens(&"x".into()), vec![Token::LowerIdent(Ident::Variable("x"))]);
+    assert_eq!(tokens(&"FOO".into()), vec![Token::UpperIdent(Ident::Variable("FOO"))]);
+    assert_eq!(tokens(&":a".into()), vec![Token::LowerIdent(Ident::Symbol("a"))]);
     assert_eq!(
         tokens(&":BAR".into()),
-        vec![Token::UpperIdent(":BAR".into())]
+        vec![Token::UpperIdent(Ident::Symbol("BAR"))]
     );
     assert_eq!(
         tokens(&Expr::a("x".into(), "y".into())),
         vec![
-            Token::LowerIdent("y".into()),
-            Token::LowerIdent("x".into()),
+            Token::LowerIdent(Ident::Variable("y")),
+            Token::LowerIdent(Ident::Variable("x")),
             Token::Apply
         ]
     );
     assert_eq!(
         tokens(&Expr::l("x".into(), "y".into())),
         vec![
-            Token::LowerIdent("y".into()),
+            Token::LowerIdent(Ident::Variable("y")),
             Token::Dot,
-            Token::LowerIdent("x".into()),
+            Token::LowerIdent(Ident::Variable("x")),
             Token::Lambda
         ]
     );

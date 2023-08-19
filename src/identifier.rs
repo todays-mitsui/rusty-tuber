@@ -23,6 +23,10 @@ impl Ident {
         }
         Ident(name)
     }
+
+    pub fn label(&self) -> &str {
+        &self.0
+    }
 }
 
 impl From<&str> for Ident {
