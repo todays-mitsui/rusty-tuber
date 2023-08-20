@@ -1,6 +1,6 @@
-use std::fmt::Display;
-use regex::Regex;
 use crate::function::Func;
+use regex::Regex;
+use std::fmt::Display;
 
 impl Display for Func {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -31,14 +31,18 @@ impl Display for Token<'_> {
 }
 
 fn tokens<'a>(f: &'a Func) -> Vec<Token<'a>> {
-    let mut tokens = f.params.iter().map(|i| {
-        let label = i.label();
-        if is_upper_ident(label) {
-            Token::UpperIdent(label)
-        } else {
-            Token::LowerIdent(label)
-        }
-    }).collect::<Vec<_>>();
+    let mut tokens = f
+        .params
+        .iter()
+        .map(|i| {
+            let label = i.label();
+            if is_upper_ident(label) {
+                Token::UpperIdent(label)
+            } else {
+                Token::LowerIdent(label)
+            }
+        })
+        .collect::<Vec<_>>();
 
     let label = f.name.label();
     if is_upper_ident(label) {
