@@ -1,7 +1,6 @@
-use std::fmt::Display;
-
 use crate::expression::Expr;
 use regex::Regex;
+use std::fmt::Display;
 
 impl Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -97,10 +96,9 @@ fn to_string(tokens: &mut Vec<Token>) -> String {
     let mut str = String::new();
     while tokens.len() > 0 {
         match tokens.len() {
-            0 => {}
             1 => {
                 let t = tokens.pop().unwrap();
-                str.push_str(&t.to_string())
+                str.push_str(&format!("{}", t))
             }
             _ => {
                 let t1 = tokens.pop().unwrap();
@@ -146,9 +144,18 @@ fn test_to_string() {
 
 #[test]
 fn test_tokens() {
-    assert_eq!(tokens(&"x".into()), vec![Token::LowerIdent(Ident::Variable("x"))]);
-    assert_eq!(tokens(&"FOO".into()), vec![Token::UpperIdent(Ident::Variable("FOO"))]);
-    assert_eq!(tokens(&":a".into()), vec![Token::LowerIdent(Ident::Symbol("a"))]);
+    assert_eq!(
+        tokens(&"x".into()),
+        vec![Token::LowerIdent(Ident::Variable("x"))]
+    );
+    assert_eq!(
+        tokens(&"FOO".into()),
+        vec![Token::UpperIdent(Ident::Variable("FOO"))]
+    );
+    assert_eq!(
+        tokens(&":a".into()),
+        vec![Token::LowerIdent(Ident::Symbol("a"))]
+    );
     assert_eq!(
         tokens(&":BAR".into()),
         vec![Token::UpperIdent(Ident::Symbol("BAR"))]

@@ -1,4 +1,4 @@
-use std::fmt::Display;
+mod display;
 
 use crate::expression::Expr;
 use crate::identifier::Ident;
@@ -38,23 +38,12 @@ impl Func {
         body
     }
 
-    pub fn params(&self) -> &Vec<Ident> {
-        &self.params
-    }
+    // pub fn params(&self) -> &Vec<Ident> {
+    //     &self.params
+    // }
 
     pub fn body(&self) -> &Expr {
         &self.body
-    }
-}
-
-impl Display for Func {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // TODO: ちゃんとする
-        let mut lhs = Expr::Variable(self.name().clone());
-        for i in self.params() {
-            lhs = Expr::a(lhs, Expr::Variable(i.clone()));
-        }
-        write!(f, "{} = {}", lhs, self.body())
     }
 }
 
