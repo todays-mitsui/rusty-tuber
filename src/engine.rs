@@ -36,6 +36,10 @@ impl Engine {
                 None => println!("{} = {}", i, i),
             },
 
+            Command::Global => {
+                self.context.for_each(|_i, f| println!("{}", f));
+            }
+
             Command::Unlambda(e) => {
                 println!("{}", e);
                 println!("== {}", e.unlambda());

@@ -36,6 +36,12 @@ impl Context {
     pub fn count(&self) -> usize {
         self.0.len()
     }
+
+    pub fn for_each(&self, callback: impl Fn(&Ident, &Func)) {
+        for (i, f) in &self.0 {
+            callback(i, f);
+        }
+    }
 }
 
 impl Default for Context {
