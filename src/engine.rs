@@ -31,8 +31,7 @@ impl Engine {
             }
 
             Command::Info(i) => match self.context.get(&i) {
-                // TODO: ちゃんとする
-                Some(f) => println!("{}", Command::Update(f.clone())),
+                Some(f) => println!("{}", f),
                 None => println!("{} = {}", i, i),
             },
 
