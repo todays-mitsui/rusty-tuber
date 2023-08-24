@@ -8,6 +8,9 @@ impl Display for Command {
             Command::Del(i) => write!(f, "{} = {}", i, i),
             Command::Update(func) => write!(f, "{}", func),
             Command::Eval(e) => write!(f, "{}", e),
+            Command::EvalLast(e) => write!(f, "! {}", e),
+            Command::EvalHead(len, e) => write!(f, "!{} {}", len, e),
+            Command::EvalTail(len, e) => write!(f, "!-{} {}", len, e),
             Command::Info(i) => write!(f, "? {}", i),
             Command::Global => write!(f, "?"),
             Command::Unlambda(e) => write!(f, "?? {}", e),
@@ -69,6 +72,51 @@ mod tests {
         assert_eq!(
             Command::Eval(Expr::l("x".into(), "y".into())).to_string(),
             "^x.y"
+        );
+    }
+
+    #[test]
+    fn test_eval_last() {
+        assert_eq!(Command::EvalLast("a".into()).to_string(), "! a");
+
+        assert_eq!(
+            Command::EvalLast(Expr::a("a".into(), "b".into())).to_string(),
+            "! `ab"
+        );
+
+        assert_eq!(
+            Command::EvalLast(Expr::l("x".into(), "y".into())).to_string(),
+            "! ^x.y"
+        );
+    }
+
+    #[test]
+    fn test_eval_head() {
+        assert_eq!(Command::EvalHead(42, "a".into()).to_string(), "!42 a");
+
+        assert_eq!(
+            Command::EvalHead(42, Expr::a("a".into(), "b".into())).to_string(),
+            "!42 `ab"
+        );
+
+        assert_eq!(
+            Command::EvalHead(42, Expr::l("x".into(), "y".into())).to_string(),
+            "!42 ^x.y"
+        );
+    }
+
+    #[test]
+    fn test_eval_tail() {
+        assert_eq!(Command::EvalTail(42, "a".into()).to_string(), "!-42 a");
+
+        assert_eq!(
+            Command::EvalTail(42, Expr::a("a".into(), "b".into())).to_string(),
+            "!-42 `ab"
+        );
+
+        assert_eq!(
+            Command::EvalTail(42, Expr::l("x".into(), "y".into())).to_string(),
+            "!-42 ^x.y"
         );
     }
 

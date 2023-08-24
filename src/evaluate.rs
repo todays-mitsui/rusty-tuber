@@ -475,7 +475,10 @@ mod tests {
 
         assert_eq!(stack.len(), 1);
 
-        assert_eq!(stack.pop(1), Some(vec![EvalSteps::new(Expr::v("x"), &context)]));
+        assert_eq!(
+            stack.pop(1),
+            Some(vec![EvalSteps::new(Expr::v("x"), &context)])
+        );
 
         assert_eq!(stack.len(), 0);
 
@@ -512,9 +515,18 @@ mod tests {
             EvalSteps::new(Expr::v("z"), &context),
         ]);
 
-        assert_eq!(stack.nth(0), Some(&mut EvalSteps::new(Expr::v("z"), &context)));
-        assert_eq!(stack.nth(1), Some(&mut EvalSteps::new(Expr::v("y"), &context)));
-        assert_eq!(stack.nth(2), Some(&mut EvalSteps::new(Expr::v("x"), &context)));
+        assert_eq!(
+            stack.nth(0),
+            Some(&mut EvalSteps::new(Expr::v("z"), &context))
+        );
+        assert_eq!(
+            stack.nth(1),
+            Some(&mut EvalSteps::new(Expr::v("y"), &context))
+        );
+        assert_eq!(
+            stack.nth(2),
+            Some(&mut EvalSteps::new(Expr::v("x"), &context))
+        );
         assert_eq!(stack.nth(3), None);
     }
 }

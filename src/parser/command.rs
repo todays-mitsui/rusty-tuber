@@ -1,8 +1,8 @@
-use combine::parser::char::{char, spaces, string};
+use combine::parser::char::{char, digit, spaces, string};
 use combine::parser::choice::choice;
 #[allow(unused_imports)]
 use combine::EasyParser;
-use combine::{attempt, eof, parser, ParseError, Parser, Stream};
+use combine::{attempt, eof, many1, parser, ParseError, Parser, Stream};
 
 use crate::command::Command;
 use crate::expression::Expr;
@@ -30,6 +30,9 @@ where
     choice((
         attempt(update()),
         eval(),
+        attempt(eval_head()),
+        attempt(eval_tail()),
+        eval_last(),
         attempt(unlambda()),
         attempt(info()),
         global(),
@@ -98,6 +101,46 @@ where
         From<::std::num::ParseIntError>,
 {
     expr().map(Command::Eval)
+}
+
+fn eval_last<Input>() -> impl Parser<Input, Output = Command>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+        From<::std::num::ParseIntError>,
+{
+    char('!').with(expr()).map(Command::EvalLast)
+}
+
+fn eval_head<Input>() -> impl Parser<Input, Output = Command>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+        From<::std::num::ParseIntError>,
+{
+    let len = many1(digit()).and_then(|x: String| x.parse::<usize>());
+
+    char('!')
+        .with(len)
+        .and(spaces().with(expr()))
+        .map(|(len, e)| Command::EvalHead(len, e))
+}
+
+fn eval_tail<Input>() -> impl Parser<Input, Output = Command>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+        From<::std::num::ParseIntError>,
+{
+    let len = many1(digit()).and_then(|x: String| x.parse::<usize>());
+
+    string("!-")
+        .with(len)
+        .and(spaces().with(expr()))
+        .map(|(len, e)| Command::EvalTail(len, e))
 }
 
 // ========================================================================== //
@@ -220,6 +263,21 @@ mod tests {
         assert_eq!(
             command().easy_parse("`ab"),
             Ok((Command::Eval(Expr::a("a".into(), "b".into())), ""))
+        );
+
+        assert_eq!(
+            command().easy_parse("!`ab"),
+            Ok((Command::EvalLast(Expr::a("a".into(), "b".into())), ""))
+        );
+
+        assert_eq!(
+            command().easy_parse("!42 `ab"),
+            Ok((Command::EvalHead(42, Expr::a("a".into(), "b".into())), ""))
+        );
+
+        assert_eq!(
+            command().easy_parse("!-42 `ab"),
+            Ok((Command::EvalTail(42, Expr::a("a".into(), "b".into())), ""))
         );
 
         assert_eq!(
