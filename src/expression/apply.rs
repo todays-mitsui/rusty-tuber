@@ -1,21 +1,21 @@
 use super::Expr;
-use crate::environment::Env;
+use crate::context::Context;
 
 impl Expr {
-    pub fn arity(&self, env: &Env) -> Option<usize> {
+    pub fn arity(&self, context: &Context) -> Option<usize> {
         match self {
             Expr::Lambda { .. } => Some(1),
-            Expr::Variable(id) => env.arity(id),
+            Expr::Variable(id) => context.arity(id),
             _ => None,
         }
     }
 
     /// TODO: `Option<T>` ではなく `Result<T, E>` を返すのが適切かも
-    pub fn apply(&self, env: &Env, args: Vec<Expr>) -> Option<Expr> {
+    pub fn apply(&self, context: &Context, args: Vec<Expr>) -> Option<Expr> {
         match self {
             Expr::Lambda { param, body } => Some(body.clone().substitute(&param, &args[0])),
 
-            Expr::Variable(id) => match env.get(&id) {
+            Expr::Variable(id) => match context.get(&id) {
                 Some(func) => Some(func.apply(args)),
                 None => None,
             },
@@ -41,25 +41,25 @@ mod tests {
             ":a".into(),
         );
 
-        let env = Env::from(vec![f0, f1, f2, f3]);
+        let context = Context::from(vec![f0, f1, f2, f3]);
 
         // シンボルは関数が紐づくことがない、arity は定義されない
-        assert_eq!(Expr::s("a").arity(&env), None);
+        assert_eq!(Expr::s("a").arity(&context), None);
 
         // 関数適用の arity は定義されない
-        assert_eq!(Expr::a(Expr::v("x"), Expr::v("y")).arity(&env), None);
+        assert_eq!(Expr::a(Expr::v("x"), Expr::v("y")).arity(&context), None);
 
         // ラムダ抽象の arity は常に 1
-        assert_eq!(Expr::l("x".into(), Expr::v("x")).arity(&env), Some(1));
+        assert_eq!(Expr::l("x".into(), Expr::v("x")).arity(&context), Some(1));
 
         // 関数として定義されていない自由変数の arity は定義されない (0ですらない)
-        assert_eq!(Expr::v("x").arity(&env), None);
+        assert_eq!(Expr::v("x").arity(&context), None);
 
         // 定義済み関数と紐づく自由変数はその関数の arity を返す
-        assert_eq!(Expr::v("F0").arity(&env), Some(0));
-        assert_eq!(Expr::v("F1").arity(&env), Some(1));
-        assert_eq!(Expr::v("F2").arity(&env), Some(2));
-        assert_eq!(Expr::v("F3").arity(&env), Some(3));
+        assert_eq!(Expr::v("F0").arity(&context), Some(0));
+        assert_eq!(Expr::v("F1").arity(&context), Some(1));
+        assert_eq!(Expr::v("F2").arity(&context), Some(2));
+        assert_eq!(Expr::v("F3").arity(&context), Some(3));
     }
 
     #[test]

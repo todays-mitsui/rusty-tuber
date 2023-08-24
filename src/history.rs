@@ -1,6 +1,6 @@
 extern crate glob;
 use crate::command::Command;
-use crate::environment::Env;
+use crate::context::Context;
 use crate::parser::command::parse_command;
 use glob::glob;
 use home_dir::*;
@@ -38,8 +38,8 @@ pub fn open_or_create_history_file() -> File {
     };
 }
 
-pub fn rebuild_env(file: &File, env: Option<Env>) -> Env {
-    let mut env = env.unwrap_or(Env::new());
+pub fn rebuild_context(file: &File, context: Option<Context>) -> Context {
+    let mut context = context.unwrap_or(Context::new());
 
     for line in std::io::BufReader::new(file).lines() {
         let line = line.unwrap();
@@ -48,12 +48,12 @@ pub fn rebuild_env(file: &File, env: Option<Env>) -> Env {
         }
         let command = parse_command(&line).unwrap();
         match command {
-            Command::Update(f) => env.def(f.clone()),
+            Command::Update(f) => context.def(f.clone()),
             _ => (),
         }
     }
 
-    env
+    context
 }
 
 pub struct Logger<W: Write>(W);

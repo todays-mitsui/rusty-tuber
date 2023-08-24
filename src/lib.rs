@@ -1,5 +1,5 @@
 pub mod command;
-pub mod environment;
+pub mod context;
 pub mod evaluate;
 pub mod expression;
 pub mod function;

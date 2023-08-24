@@ -1,4 +1,4 @@
-use crate::environment::Env;
+use crate::context::Context;
 use crate::expression::Expr;
 use crate::expression::Expr::*;
 
@@ -6,7 +6,7 @@ use crate::expression::Expr::*;
 pub struct EvalSteps<'a> {
     expr: Expr,
     stack: Stack<'a>,
-    env: &'a Env,
+    context: &'a Context,
     step: Step,
 }
 
@@ -21,11 +21,11 @@ enum Step {
 }
 
 impl EvalSteps<'_> {
-    pub fn new(expr: Expr, env: &Env) -> EvalSteps {
+    pub fn new(expr: Expr, context: &Context) -> EvalSteps {
         EvalSteps {
             expr,
             stack: Stack::new(),
-            env,
+            context,
             step: Step::LeftTree,
         }
     }
@@ -57,17 +57,17 @@ impl EvalSteps<'_> {
     fn left_tree(&mut self) -> Option<Expr> {
         while let Apply { lhs, rhs } = self.expr.clone() {
             self.expr = *lhs;
-            self.stack.push(EvalSteps::new(*rhs, self.env));
+            self.stack.push(EvalSteps::new(*rhs, self.context));
         }
 
         let maybe_next = self
             .expr
-            .arity(&self.env)
+            .arity(&self.context)
             .filter(|a| *a >= 1 || self.stack.len() >= 1)
             .and_then(|a| self.stack.pop(a))
             .and_then(|args| {
                 self.expr
-                    .apply(&self.env, args.iter().map(|arg| arg.expr()).collect())
+                    .apply(&self.context, args.iter().map(|arg| arg.expr()).collect())
             })
             .map(|expr| {
                 self.expr = expr;
@@ -158,7 +158,7 @@ mod tests {
     use super::*;
     use crate::function::Func;
 
-    fn setup() -> Env {
+    fn setup() -> Context {
         let i = Func::new("i".into(), vec!["x".into()], "x".into());
         let k = Func::new("k".into(), vec!["x".into(), "y".into()], "x".into());
         let s = Func::new(
@@ -173,17 +173,17 @@ mod tests {
         let _true = Func::new("TRUE".into(), vec![], Expr::a("k".into(), "i".into()));
         let _false = Func::new("FALSE".into(), vec![], "k".into());
 
-        Env::from(vec![i, k, s, _true, _false])
+        Context::from(vec![i, k, s, _true, _false])
     }
 
     #[test]
     fn test_eval_steps_lambda_i() {
-        let env = Env::new();
+        let context = Context::new();
 
         let i = Expr::l("x".into(), "x".into());
         let expr = Expr::a(i, ":a".into());
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(steps.next(), Some(":a".into()));
         assert_eq!(steps.next(), None);
@@ -191,12 +191,12 @@ mod tests {
 
     #[test]
     fn test_eval_steps_lambda_k_1() {
-        let env = Env::new();
+        let context = Context::new();
 
         let k = Expr::l("x".into(), Expr::l("y".into(), "x".into()));
         let expr = Expr::a(k, ":a".into());
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(steps.next(), Some(Expr::l("y".into(), ":a".into())));
         assert_eq!(steps.next(), None);
@@ -204,12 +204,12 @@ mod tests {
 
     #[test]
     fn test_eval_steps_lambda_k_2() {
-        let env = Env::new();
+        let context = Context::new();
 
         let k = Expr::l("x".into(), Expr::l("y".into(), "x".into()));
         let expr = Expr::a(Expr::a(k, ":a".into()), ":b".into());
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(
             steps.next(),
@@ -221,33 +221,33 @@ mod tests {
 
     #[test]
     fn test_eval_steps_func_true_1() {
-        let env = setup();
+        let context = setup();
 
         let expr: Expr = "TRUE".into();
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(steps.next(), None);
     }
 
     #[test]
     fn test_eval_steps_func_true_2() {
-        let env = setup();
+        let context = setup();
 
         let expr = Expr::a(":a".into(), "TRUE".into());
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(steps.next(), None);
     }
 
     #[test]
     fn test_eval_steps_func_true_3() {
-        let env = setup();
+        let context = setup();
 
         let expr = Expr::a(Expr::a("TRUE".into(), ":a".into()), ":b".into());
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(
             steps.next(),
@@ -263,11 +263,11 @@ mod tests {
 
     #[test]
     fn test_eval_steps_func_i() {
-        let env = setup();
+        let context = setup();
 
         let expr = Expr::a("i".into(), ":a".into());
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(steps.next(), Some(":a".into()));
         assert_eq!(steps.next(), None);
@@ -275,11 +275,11 @@ mod tests {
 
     #[test]
     fn test_eval_steps_func_k_1() {
-        let env = setup();
+        let context = setup();
 
         let expr = Expr::a("k".into(), ":a".into());
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         // k の arity が2なのに対して引数を1つしか与えていないので簡約されない
         assert_eq!(steps.next(), None);
@@ -287,11 +287,11 @@ mod tests {
 
     #[test]
     fn test_eval_steps_func_k_2() {
-        let env = setup();
+        let context = setup();
 
         let expr = Expr::a(Expr::a("k".into(), ":a".into()), ":b".into());
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(steps.next(), Some(":a".into()));
         assert_eq!(steps.next(), None);
@@ -299,11 +299,11 @@ mod tests {
 
     #[test]
     fn test_eval_steps_func_s_1() {
-        let env = setup();
+        let context = setup();
 
         let expr = Expr::a("s".into(), ":a".into());
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         // s の arity が3なのに対して引数を1つしか与えていないので簡約されない
         assert_eq!(steps.next(), None);
@@ -311,11 +311,11 @@ mod tests {
 
     #[test]
     fn test_eval_steps_func_s_2() {
-        let env = setup();
+        let context = setup();
 
         let expr = Expr::a(Expr::a("s".into(), ":a".into()), ":b".into());
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         // s の arity が3なのに対して引数を2つしか与えていないので簡約されない
         assert_eq!(steps.next(), None);
@@ -323,14 +323,14 @@ mod tests {
 
     #[test]
     fn test_eval_steps_func_s_3() {
-        let env = setup();
+        let context = setup();
 
         let expr = Expr::a(
             Expr::a(Expr::a("s".into(), ":a".into()), ":b".into()),
             ":c".into(),
         );
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(
             steps.next(),
@@ -344,28 +344,28 @@ mod tests {
 
     #[test]
     fn test_eval_steps_skk() {
-        let env = setup();
+        let context = setup();
 
         let expr = Expr::a(
             Expr::a(Expr::a("s".into(), "k".into()), "k".into()),
             ":a".into(),
         );
 
-        let steps = EvalSteps::new(expr, &env);
+        let steps = EvalSteps::new(expr, &context);
 
         assert_eq!(steps.last(), Some(Expr::s("a")));
     }
 
     #[test]
     fn test_eval_steps_right_tree_1() {
-        let env = setup();
+        let context = setup();
 
         let expr = Expr::a(
             ":a".into(),
             Expr::a(Expr::a("k".into(), ":b".into()), ":c".into()),
         );
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(steps.next(), Some(Expr::a(":a".into(), ":b".into())));
         assert_eq!(steps.next(), None);
@@ -373,7 +373,7 @@ mod tests {
 
     #[test]
     fn test_eval_steps_right_tree_2() {
-        let env = setup();
+        let context = setup();
 
         // ```:a`i:b`i:c
         let expr = Expr::a(
@@ -381,7 +381,7 @@ mod tests {
             Expr::a("i".into(), ":c".into()),
         );
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(
             steps.next(),
@@ -399,7 +399,7 @@ mod tests {
 
     #[test]
     fn test_eval_steps() {
-        let env = setup();
+        let context = setup();
 
         // ```s^x.`x:a^x.`x:b:c
         let expr = Expr::a(
@@ -413,7 +413,7 @@ mod tests {
             ":c".into(),
         );
 
-        let mut steps = EvalSteps::new(expr, &env);
+        let mut steps = EvalSteps::new(expr, &context);
 
         assert_eq!(
             steps.next(),
@@ -453,29 +453,29 @@ mod tests {
 
     #[test]
     fn test_stack_pop() {
-        let env = Env::new();
+        let context = Context::new();
         let mut stack = Stack(vec![
-            EvalSteps::new(Expr::v("x"), &env),
-            EvalSteps::new(Expr::v("y"), &env),
+            EvalSteps::new(Expr::v("x"), &context),
+            EvalSteps::new(Expr::v("y"), &context),
         ]);
 
         assert_eq!(stack.len(), 2);
 
-        stack.push(EvalSteps::new(Expr::v("z"), &env));
+        stack.push(EvalSteps::new(Expr::v("z"), &context));
 
         assert_eq!(stack.len(), 3);
 
         assert_eq!(
             stack.pop(2),
             Some(vec![
-                EvalSteps::new(Expr::v("z"), &env),
-                EvalSteps::new(Expr::v("y"), &env)
+                EvalSteps::new(Expr::v("z"), &context),
+                EvalSteps::new(Expr::v("y"), &context)
             ])
         );
 
         assert_eq!(stack.len(), 1);
 
-        assert_eq!(stack.pop(1), Some(vec![EvalSteps::new(Expr::v("x"), &env)]));
+        assert_eq!(stack.pop(1), Some(vec![EvalSteps::new(Expr::v("x"), &context)]));
 
         assert_eq!(stack.len(), 0);
 
@@ -484,18 +484,18 @@ mod tests {
 
     #[test]
     fn test_stack_all() {
-        let env = Env::new();
+        let context = Context::new();
         let stack = Stack(vec![
-            EvalSteps::new(Expr::v("x"), &env),
-            EvalSteps::new(Expr::v("y"), &env),
-            EvalSteps::new(Expr::v("z"), &env),
+            EvalSteps::new(Expr::v("x"), &context),
+            EvalSteps::new(Expr::v("y"), &context),
+            EvalSteps::new(Expr::v("z"), &context),
         ]);
         assert_eq!(
             stack.all(),
             vec![
-                EvalSteps::new(Expr::v("z"), &env),
-                EvalSteps::new(Expr::v("y"), &env),
-                EvalSteps::new(Expr::v("x"), &env),
+                EvalSteps::new(Expr::v("z"), &context),
+                EvalSteps::new(Expr::v("y"), &context),
+                EvalSteps::new(Expr::v("x"), &context),
             ]
         );
 
@@ -505,16 +505,16 @@ mod tests {
 
     #[test]
     fn test_stack_nth() {
-        let env = Env::new();
+        let context = Context::new();
         let mut stack = Stack(vec![
-            EvalSteps::new(Expr::v("x"), &env),
-            EvalSteps::new(Expr::v("y"), &env),
-            EvalSteps::new(Expr::v("z"), &env),
+            EvalSteps::new(Expr::v("x"), &context),
+            EvalSteps::new(Expr::v("y"), &context),
+            EvalSteps::new(Expr::v("z"), &context),
         ]);
 
-        assert_eq!(stack.nth(0), Some(&mut EvalSteps::new(Expr::v("z"), &env)));
-        assert_eq!(stack.nth(1), Some(&mut EvalSteps::new(Expr::v("y"), &env)));
-        assert_eq!(stack.nth(2), Some(&mut EvalSteps::new(Expr::v("x"), &env)));
+        assert_eq!(stack.nth(0), Some(&mut EvalSteps::new(Expr::v("z"), &context)));
+        assert_eq!(stack.nth(1), Some(&mut EvalSteps::new(Expr::v("y"), &context)));
+        assert_eq!(stack.nth(2), Some(&mut EvalSteps::new(Expr::v("x"), &context)));
         assert_eq!(stack.nth(3), None);
     }
 }

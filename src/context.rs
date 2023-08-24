@@ -8,23 +8,19 @@ use crate::identifier::Ident;
 ///
 /// 識別子と関数の組を保持する
 #[derive(Debug, Clone, PartialEq)]
-pub struct Env {
-    env: HashMap<Ident, Func>,
-}
+pub struct Context(HashMap<Ident, Func>);
 
-impl Env {
-    pub fn new() -> Env {
-        Env {
-            env: HashMap::new(),
-        }
+impl Context {
+    pub fn new() -> Self {
+        Self(HashMap::new())
     }
 
     pub fn def(&mut self, func: Func) {
-        self.env.insert(func.name().clone(), func);
+        self.0.insert(func.name().clone(), func);
     }
 
     pub fn get(&self, id: &Ident) -> Option<&Func> {
-        self.env.get(id)
+        self.0.get(id)
     }
 
     pub fn arity(&self, id: &Ident) -> Option<usize> {
@@ -33,28 +29,28 @@ impl Env {
 
     #[allow(dead_code)]
     pub fn del(&mut self, id: &Ident) {
-        self.env.remove(id);
+        self.0.remove(id);
     }
 
     #[allow(dead_code)]
     pub fn count(&self) -> usize {
-        self.env.len()
+        self.0.len()
     }
 }
 
-impl Default for Env {
+impl Default for Context {
     fn default() -> Self {
-        Env::from(vec![i(), k(), s()])
+        Context::from(vec![i(), k(), s()])
     }
 }
 
-impl From<Vec<Func>> for Env {
+impl From<Vec<Func>> for Context {
     fn from(v: Vec<Func>) -> Self {
-        let mut env = Env::new();
+        let mut context = Context::new();
         for func in v {
-            env.def(func);
+            context.def(func);
         }
-        env
+        context
     }
 }
 
@@ -66,22 +62,22 @@ mod tests {
     use crate::identifier::Ident;
 
     #[test]
-    fn test_env_def() {
-        let mut env = Env::new();
+    fn test_context_def() {
+        let mut context = Context::new();
 
-        assert_eq!(env.count(), 0);
+        assert_eq!(context.count(), 0);
 
-        env.def(Func::new(
+        context.def(Func::new(
             Ident::new("i"),
             vec![Ident::new("x")],
             Expr::v("x"),
         ));
-        env.def(Func::new(
+        context.def(Func::new(
             Ident::new("k"),
             vec![Ident::new("x"), Ident::new("y")],
             Expr::v("x"),
         ));
-        env.def(Func::new(
+        context.def(Func::new(
             Ident::new("s"),
             vec![Ident::new("x"), Ident::new("y"), Ident::new("z")],
             Expr::a(
@@ -90,19 +86,19 @@ mod tests {
             ),
         ));
 
-        assert_eq!(env.count(), 3);
-        assert_eq!(env.arity(&Ident::new("i")), Some(1));
-        assert_eq!(env.arity(&Ident::new("k")), Some(2));
-        assert_eq!(env.arity(&Ident::new("s")), Some(3));
-        assert_eq!(env.arity(&Ident::new("UNDEFINED")), None);
+        assert_eq!(context.count(), 3);
+        assert_eq!(context.arity(&Ident::new("i")), Some(1));
+        assert_eq!(context.arity(&Ident::new("k")), Some(2));
+        assert_eq!(context.arity(&Ident::new("s")), Some(3));
+        assert_eq!(context.arity(&Ident::new("UNDEFINED")), None);
 
-        env.del(&Ident::new("i"));
-        assert_eq!(env.count(), 2);
-        assert_eq!(env.arity(&Ident::new("i")), None);
+        context.del(&Ident::new("i"));
+        assert_eq!(context.count(), 2);
+        assert_eq!(context.arity(&Ident::new("i")), None);
     }
 
     #[test]
-    fn test_env_from() {
+    fn test_context_from() {
         let i: Func = Func::new("i".into(), vec![Ident::new("x")], Expr::v("x"));
         let k: Func = Func::new(
             "k".into(),
@@ -118,12 +114,12 @@ mod tests {
             ),
         );
 
-        let env: Env = Env::from(vec![i, k, s]);
+        let context: Context = Context::from(vec![i, k, s]);
 
-        assert_eq!(env.count(), 3);
-        assert_eq!(env.arity(&Ident::new("i")), Some(1));
-        assert_eq!(env.arity(&Ident::new("k")), Some(2));
-        assert_eq!(env.arity(&Ident::new("s")), Some(3));
-        assert_eq!(env.arity(&Ident::new("UNDEFINED")), None);
+        assert_eq!(context.count(), 3);
+        assert_eq!(context.arity(&Ident::new("i")), Some(1));
+        assert_eq!(context.arity(&Ident::new("k")), Some(2));
+        assert_eq!(context.arity(&Ident::new("s")), Some(3));
+        assert_eq!(context.arity(&Ident::new("UNDEFINED")), None);
     }
 }

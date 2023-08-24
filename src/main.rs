@@ -1,6 +1,6 @@
 mod command;
 mod engine;
-mod environment;
+mod context;
 mod evaluate;
 mod expression;
 mod function;
@@ -11,7 +11,7 @@ mod parser;
 use clap::Parser;
 
 use engine::Engine;
-use history::{open_or_create_history_file, rebuild_env, Logger};
+use history::{open_or_create_history_file, rebuild_context, Logger};
 use parser::command::parse_command;
 
 /// An interpreter that evaluates λ-calculations step by step.
@@ -27,13 +27,13 @@ fn main() {
     let command = args.command;
 
     let file = open_or_create_history_file();
-    let env = rebuild_env(&file, None);
+    let context = rebuild_context(&file, None);
     let mut logger = Logger::new(file);
 
     match parse_command(&command) {
         Ok(command) => {
             logger.push(&command);
-            Engine::new(env).run(command);
+            Engine::new(context).run(command);
         }
         Err(e) => println!("{}", e),
     }

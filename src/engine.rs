@@ -1,36 +1,36 @@
 use crate::command::Command;
-use crate::environment::Env;
+use crate::context::Context;
 use crate::evaluate::EvalSteps;
 
 pub struct Engine {
-    env: Env,
+    context: Context,
 }
 
 impl Engine {
-    pub fn new(env: Env) -> Self {
-        Engine { env }
+    pub fn new(context: Context) -> Self {
+        Self { context }
     }
 
     pub fn run(&mut self, command: Command) {
         match command {
             Command::Del(i) => {
-                self.env.del(&i);
+                self.context.del(&i);
             }
 
             Command::Update(f) => {
-                self.env.def(f);
+                self.context.def(f);
             }
 
             Command::Eval(e) => {
                 println!("{}", e);
 
-                let steps = EvalSteps::new(e, &self.env);
+                let steps = EvalSteps::new(e, &self.context);
                 for e in steps.take(100) {
                     println!("→ {}", e);
                 }
             }
 
-            Command::Info(i) => match self.env.get(&i) {
+            Command::Info(i) => match self.context.get(&i) {
                 // TODO: ちゃんとする
                 Some(f) => println!("{}", Command::Update(f.clone())),
                 None => println!("{} = {}", i, i),
