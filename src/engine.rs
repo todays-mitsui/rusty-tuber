@@ -32,7 +32,7 @@ impl Engine {
 
             Command::Info(i) => match self.context.get(&i) {
                 Some(f) => println!("{}", f),
-                None => println!("{} = {}", i, i),
+                None => println!("{0} = {0}", i),
             },
 
             Command::Global => {
