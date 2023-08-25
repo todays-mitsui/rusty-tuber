@@ -30,6 +30,23 @@ impl EvalSteps<'_> {
         }
     }
 
+    pub fn eval_last(&mut self, limit: usize) -> (Option<Expr>, bool) {
+        assert!(0 < limit);
+
+        if let Some(mut e) = self.next() {
+            for _ in 0..limit-1 {
+                if let Some(next) = self.next() {
+                    e = next;
+                } else {
+                    return (Some(e), false);
+                }
+            }
+            (Some(e), true)
+        } else {
+            (None, false)
+        }
+    }
+
     fn expr(&self) -> Expr {
         let mut expr = self.expr.clone();
 
@@ -528,5 +545,50 @@ mod tests {
             Some(&mut EvalSteps::new(Expr::v("x"), &context))
         );
         assert_eq!(stack.nth(3), None);
+    }
+
+    #[test]
+    fn test_eval_last_1() {
+        let context = setup();
+
+        let expr = ":a".into();
+        let mut steps = EvalSteps::new(expr, &context);
+
+        assert_eq!(steps.eval_last(42), (None, false));
+    }
+
+    #[test]
+    fn test_eval_last_2() {
+        let context = setup();
+
+        let expr = Expr::a(
+            "i".into(),
+            Expr::a(
+                "i".into(),
+                Expr::a("i".into(), Expr::a("i".into(), ":a".into())),
+            ),
+        );
+        let mut steps = EvalSteps::new(expr, &context);
+
+        assert_eq!(steps.eval_last(42), (Some(":a".into()), false));
+    }
+
+    #[test]
+    fn test_eval_last_3() {
+        let context = setup();
+
+        let expr = Expr::a(
+            "i".into(),
+            Expr::a(
+                "i".into(),
+                Expr::a("i".into(), Expr::a("i".into(), ":a".into())),
+            ),
+        );
+        let mut steps = EvalSteps::new(expr, &context);
+
+        assert_eq!(
+            steps.eval_last(3),
+            (Some(Expr::a("i".into(), ":a".into())), true)
+        );
     }
 }

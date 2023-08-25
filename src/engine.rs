@@ -30,6 +30,18 @@ impl Engine {
                 }
             }
 
+            Command::EvalLast(e) => {
+                println!("{}", e);
+
+                let mut steps = EvalSteps::new(e, &self.context);
+                if let (Some(e), _continue) = steps.eval_last(100) {
+                    println!("→ ...");
+                    println!("→ {}", e);
+                } else {
+                    // TODO
+                }
+            }
+
             Command::Info(i) => match self.context.get(&i) {
                 Some(f) => println!("{}", f),
                 None => println!("{0} = {0}", i),
