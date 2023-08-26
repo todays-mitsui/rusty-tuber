@@ -8,7 +8,7 @@ use crate::command::Command;
 use crate::expression::Expr;
 use crate::function::Func;
 use crate::identifier::Ident;
-use crate::parser::expression::expr;
+use crate::parser::expression::ecmascript::expr;
 use crate::parser::identifier::identifier;
 
 pub fn parse_command(s: &str) -> Result<Command, String> {
@@ -219,7 +219,7 @@ mod tests {
         );
 
         assert_eq!(
-            parse_command("s(x, y, z) = ``xz`yz"),
+            parse_command("s(x, y, z) = x(z, y(z))"),
             Ok(Command::Update(Func::new(
                 "s".into(),
                 vec!["x".into(), "y".into(), "z".into()],
@@ -231,7 +231,7 @@ mod tests {
         );
 
         assert_eq!(
-            parse_command("`ab"),
+            parse_command("a(b)"),
             Ok(Command::Eval(Expr::a("a".into(), "b".into())))
         );
 
@@ -261,7 +261,7 @@ mod tests {
         );
 
         assert_eq!(
-            command().easy_parse("s(x, y, z) = ``xz`yz"),
+            command().easy_parse("s(x, y, z) = x(z, y(z))"),
             Ok((
                 Command::Update(Func::new(
                     "s".into(),
@@ -276,22 +276,22 @@ mod tests {
         );
 
         assert_eq!(
-            command().easy_parse("`ab"),
+            command().easy_parse("a(b)"),
             Ok((Command::Eval(Expr::a("a".into(), "b".into())), ""))
         );
 
         assert_eq!(
-            command().easy_parse("!`ab"),
+            command().easy_parse("!a(b)"),
             Ok((Command::EvalLast(Expr::a("a".into(), "b".into())), ""))
         );
 
         assert_eq!(
-            command().easy_parse("!42 `ab"),
+            command().easy_parse("!42 a(b)"),
             Ok((Command::EvalHead(42, Expr::a("a".into(), "b".into())), ""))
         );
 
         assert_eq!(
-            command().easy_parse("!-42 `ab"),
+            command().easy_parse("!-42 a(b)"),
             Ok((Command::EvalTail(42, Expr::a("a".into(), "b".into())), ""))
         );
 
@@ -330,7 +330,7 @@ mod tests {
         );
 
         assert_eq!(
-            update().easy_parse("s(x, y, z) = ``xz`yz"),
+            update().easy_parse("s(x, y, z) = x(z, y(z))"),
             Ok((
                 Command::Update(Func::new(
                     "s".into(),
@@ -384,7 +384,7 @@ mod tests {
     fn test_eval() {
         assert_eq!(eval().easy_parse("a"), Ok((Command::Eval("a".into()), "")));
         assert_eq!(
-            eval().easy_parse("`ab"),
+            eval().easy_parse("a(b)"),
             Ok((Command::Eval(Expr::a("a".into(), "b".into())), ""))
         );
     }
@@ -406,7 +406,7 @@ mod tests {
     #[test]
     fn test_unlambda() {
         assert_eq!(
-            unlambda().easy_parse("??^x.x"),
+            unlambda().easy_parse("??x=>x"),
             Ok((Command::Unlambda(Expr::l("x".into(), "x".into())), ""))
         );
     }
