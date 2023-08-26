@@ -114,7 +114,11 @@ where
     <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
         From<::std::num::ParseIntError>,
 {
-    choice((symbol(), var()))
+    choice((
+        char('(').with(spaces().with(expr())).skip(spaces().with(char(')'))),
+        symbol(),
+        var(),
+    ))
 }
 
 fn args<Input>() -> impl Parser<Input, Output = Vec<Expr>>

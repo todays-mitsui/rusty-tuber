@@ -31,10 +31,10 @@ impl Engine {
             }
 
             Command::Eval(e) => {
-                match &self.display_style {
-                    DisplayStyle::LazyK => println!("{}", ExprLazyKStyle(&e)),
-                    DisplayStyle::Ecmascript => println!("{}", ExprECMAScriptStyle(&e)),
-                }
+                // match &self.display_style {
+                //     DisplayStyle::LazyK => println!("{}", ExprLazyKStyle(&e)),
+                //     DisplayStyle::Ecmascript => println!("{}", ExprECMAScriptStyle(&e)),
+                // }
 
                 let steps = EvalSteps::new(e, &self.context);
                 for e in steps.take(1000) {

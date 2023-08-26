@@ -15,12 +15,12 @@ impl Default for Context {
             Func::new(
                 "TRUE".into(),
                 vec![],
-                Expr::l("x".into(), Expr::l("y".into(), "x".into())),
+                expr().easy_parse("x=>y=>x").unwrap().0,
             ),
             Func::new(
                 "FALSE".into(),
                 vec![],
-                Expr::l("x".into(), Expr::l("y".into(), "y".into())),
+                expr().easy_parse("x=>y=>y").unwrap().0,
             ),
             Func::new(
                 "IF".into(),
@@ -35,20 +35,17 @@ impl Default for Context {
             Func::new(
                 "AND".into(),
                 vec!["x".into(), "y".into()],
-                Expr::a(Expr::a("x".into(), "y".into()), "FALSE".into()),
+                expr().easy_parse("x(y, FALSE)").unwrap().0,
             ),
             Func::new(
                 "OR".into(),
                 vec!["x".into(), "y".into()],
-                Expr::a(Expr::a("x".into(), "TRUE".into()), "y".into()),
+                expr().easy_parse("x(TRUE, y)").unwrap().0,
             ),
             Func::new(
                 "XOR".into(),
                 vec!["x".into(), "y".into()],
-                Expr::a(
-                    Expr::a("x".into(), Expr::a("NOT".into(), "y".into())),
-                    "y".into(),
-                ),
+                expr().easy_parse("x(not(y), y)").unwrap().0,
             ),
             Func::new(
                 "CONS".into(),
@@ -74,38 +71,17 @@ impl Default for Context {
             Func::new(
                 "IS_ZERO".into(),
                 vec!["n".into()],
-                Expr::a(
-                    Expr::a("n".into(), Expr::l("_".into(), "FALSE".into())),
-                    "TRUE".into(),
-                ),
+                expr().easy_parse("n(_=>FALSE, TRUE)").unwrap().0,
             ),
             Func::new(
                 "SUCC".into(),
                 vec!["n".into()],
-                Expr::l(
-                    "f".into(),
-                    Expr::l(
-                        "x".into(),
-                        Expr::a(
-                            "f".into(),
-                            Expr::a(Expr::a("n".into(), "f".into()), "x".into()),
-                        ),
-                    ),
-                ),
+                expr().easy_parse("f=>x=>f(n(f, x))").unwrap().0,
             ),
             Func::new(
                 "ADD".into(),
                 vec!["m".into(), "n".into()],
-                Expr::l(
-                    "f".into(),
-                    Expr::l(
-                        "x".into(),
-                        Expr::a(
-                            Expr::a("m".into(), "f".into()),
-                            Expr::a(Expr::a("n".into(), "f".into()), "x".into()),
-                        ),
-                    ),
-                ),
+                expr().easy_parse("f=>x=>m(f, n(f, x))").unwrap().0,
             ),
             Func::new(
                 "MUL".into(),
@@ -131,23 +107,20 @@ impl Default for Context {
             Func::new(
                 "SUB".into(),
                 vec!["m".into(), "n".into()],
-                expr().easy_parse("n(pred, m)").unwrap().0,
+                expr().easy_parse("n(PRED, m)").unwrap().0,
             ),
             Func::new(
                 "GTE".into(),
                 vec!["m".into(), "n".into()],
                 Expr::a(
                     "IS_ZERO".into(),
-                    Expr::a("SUB".into(), Expr::a("m".into(), "n".into())),
+                    expr().easy_parse("IS_ZERO(SUB(n, m))").unwrap().0,
                 ),
             ),
             Func::new(
                 "LTE".into(),
                 vec!["m".into(), "n".into()],
-                Expr::a(
-                    "IS_ZERO".into(),
-                    Expr::a("SUB".into(), Expr::a("n".into(), "m".into())),
-                ),
+                expr().easy_parse("IS_ZERO(SUB(m, n))").unwrap().0,
             ),
             Func::new(
                 "EQ".into(),
