@@ -1,7 +1,8 @@
 extern crate glob;
 use crate::command::Command;
 use crate::context::Context;
-use crate::parser::command::parse_command;
+use crate::parser::command::ecmascript::parse_command as parse_ecmascript_style_command;
+use crate::parser::command::lazy_k::parse_command as parse_lazy_k_style_command;
 use glob::glob;
 use home_dir::*;
 use std::fs::File;
@@ -46,9 +47,11 @@ pub fn rebuild_context(file: &File, context: Option<Context>) -> Context {
         if line.trim().is_empty() {
             continue;
         }
-        let command = parse_command(&line).unwrap();
+        let command =
+            parse_lazy_k_style_command(&line).or_else(|_err| parse_ecmascript_style_command(&line));
         match command {
-            Command::Update(f) => context.def(f.clone()),
+            Ok(Command::Update(f)) => context.def(f.clone()),
+            Ok(Command::Del(i)) => context.del(&i),
             _ => (),
         }
     }
