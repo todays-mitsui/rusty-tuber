@@ -1,3 +1,4 @@
+pub mod ecmascript;
 pub mod lazy_k;
 
 use combine::parser::char::{char, digit, spaces, string};
