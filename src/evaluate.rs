@@ -34,7 +34,7 @@ impl EvalSteps<'_> {
         assert!(0 < limit);
 
         if let Some(mut e) = self.next() {
-            for _ in 0..limit-1 {
+            for _ in 0..limit - 1 {
                 if let Some(next) = self.next() {
                     e = next;
                 } else {

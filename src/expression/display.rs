@@ -1,3 +1,5 @@
+pub mod lazy_k;
+
 use crate::expression::Expr;
 use regex::Regex;
 use std::fmt::Display;
