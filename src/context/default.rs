@@ -45,7 +45,7 @@ impl Default for Context {
             Func::new(
                 "XOR".into(),
                 vec!["x".into(), "y".into()],
-                expr().easy_parse("x(not(y), y)").unwrap().0,
+                expr().easy_parse("x(NOT(y), y)").unwrap().0,
             ),
             Func::new(
                 "CONS".into(),
@@ -100,7 +100,7 @@ impl Default for Context {
                 "PRED".into(),
                 vec!["n".into()],
                 expr()
-                    .easy_parse("f=>x=>n(g=>h=>h(g(f)))(u=>x)(u=>u)")
+                    .easy_parse("f=>x=>n(g=>h=>h(g(f)), u=>x, u=>u)")
                     .unwrap()
                     .0,
             ),
@@ -112,10 +112,7 @@ impl Default for Context {
             Func::new(
                 "GTE".into(),
                 vec!["m".into(), "n".into()],
-                Expr::a(
-                    "IS_ZERO".into(),
-                    expr().easy_parse("IS_ZERO(SUB(n, m))").unwrap().0,
-                ),
+                expr().easy_parse("IS_ZERO(SUB(m, n))").unwrap().0,
             ),
             Func::new(
                 "LTE".into(),
@@ -143,7 +140,7 @@ impl Default for Context {
                 vec![],
                 expr().easy_parse("f=>x=>f(f(f(x)))").unwrap().0,
             ),
-            Func::new("4".into(), vec![], expr().easy_parse("2(2)").unwrap().0),
+            Func::new("4".into(), vec![], expr().easy_parse("f=>x=>f(f(f(f(x))))").unwrap().0),
             Func::new(
                 "5".into(),
                 vec![],
