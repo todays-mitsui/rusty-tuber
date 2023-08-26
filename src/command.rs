@@ -1,4 +1,4 @@
-mod display;
+pub mod display;
 
 use crate::expression::Expr;
 use crate::function::Func;

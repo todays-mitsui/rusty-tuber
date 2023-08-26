@@ -1,6 +1,9 @@
 extern crate glob;
+use crate::command::display::ecmascript::ECMAScriptStyle;
+use crate::command::display::lazy_k::LazyKStyle;
 use crate::command::Command;
 use crate::context::Context;
+use crate::display_style::DisplayStyle;
 use crate::parser::command::ecmascript::parse_command as parse_ecmascript_style_command;
 use crate::parser::command::lazy_k::parse_command as parse_lazy_k_style_command;
 use glob::glob;
@@ -59,14 +62,18 @@ pub fn rebuild_context(file: &File, context: Option<Context>) -> Context {
     context
 }
 
-pub struct Logger<W: Write>(W);
+pub struct Logger<W: Write>(W, DisplayStyle);
 
 impl<W: Write> Logger<W> {
     pub fn new(writer: W) -> Self {
-        Logger(writer)
+        Logger(writer, DisplayStyle::get())
     }
 
     pub fn push(&mut self, command: &Command) {
+        match &self.1 {
+            DisplayStyle::LazyK => println!("{}", LazyKStyle(command)),
+            DisplayStyle::Ecmascript => println!("{}", ECMAScriptStyle(command)),
+        }
         writeln!(self.0, "{}", command).expect("ログの書き込みに失敗しました");
     }
 }

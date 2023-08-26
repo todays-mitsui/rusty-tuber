@@ -1,3 +1,6 @@
+pub mod ecmascript;
+pub mod lazy_k;
+
 use std::fmt::Display;
 
 use crate::command::Command;
