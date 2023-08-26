@@ -41,6 +41,8 @@ impl EvalSteps<'_> {
                     return (Some(e), false);
                 }
             }
+
+            // TODO: ここの true は嘘をつくことがある、peekable で先読みして正しい結果を返すように変える
             (Some(e), true)
         } else {
             (None, false)
