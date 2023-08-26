@@ -1,3 +1,5 @@
+pub mod lazy_k;
+
 use combine::parser::char::{char, digit, spaces, string};
 use combine::parser::choice::choice;
 #[allow(unused_imports)]
