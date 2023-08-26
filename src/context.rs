@@ -1,7 +1,8 @@
+mod default;
+
 use std::collections::HashMap;
 
 use crate::function::Func;
-use crate::function::{i, k, s};
 use crate::identifier::Ident;
 
 /// 定義済みの名前空間を表現する
@@ -41,12 +42,6 @@ impl Context {
         for (i, f) in &self.0 {
             callback(i, f);
         }
-    }
-}
-
-impl Default for Context {
-    fn default() -> Self {
-        Context::from(vec![i(), k(), s()])
     }
 }
 

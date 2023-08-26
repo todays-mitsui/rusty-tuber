@@ -43,7 +43,7 @@ pub fn open_or_create_history_file() -> File {
 }
 
 pub fn rebuild_context(file: &File, context: Option<Context>) -> Context {
-    let mut context = context.unwrap_or(Context::new());
+    let mut context = context.unwrap_or(Context::default());
 
     for line in std::io::BufReader::new(file).lines() {
         let line = line.unwrap();
