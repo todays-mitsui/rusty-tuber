@@ -1,4 +1,5 @@
 pub mod lazy_k;
+pub mod ecmascript;
 
 use crate::expression::Expr;
 use regex::Regex;

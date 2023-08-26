@@ -20,6 +20,16 @@ fn test_display() {
     );
 
     assert_eq!(
+        LazyKStyle(&Expr::a(Expr::a("x".into(), "y".into()), "z".into())).to_string(),
+        "``xyz"
+    );
+
+    assert_eq!(
+        LazyKStyle(&Expr::a("x".into(), Expr::a("y".into(), "z".into()))).to_string(),
+        "`x`yz"
+    );
+
+    assert_eq!(
         LazyKStyle(&Expr::l("x".into(), "x".into())).to_string(),
         "^x.x"
     );
