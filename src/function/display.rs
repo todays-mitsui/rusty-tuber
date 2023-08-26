@@ -1,3 +1,6 @@
+pub mod ecmascript;
+pub mod lazy_k;
+
 use crate::function::Func;
 use regex::Regex;
 use std::fmt::Display;

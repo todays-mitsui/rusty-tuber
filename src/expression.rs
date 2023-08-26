@@ -1,5 +1,5 @@
 mod apply;
-mod display;
+pub mod display;
 mod free_vars;
 mod substitute;
 mod unlambda;
