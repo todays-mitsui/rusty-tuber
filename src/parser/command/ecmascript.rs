@@ -202,148 +202,148 @@ mod tests {
     use crate::command::Command;
     use crate::expression::Expr;
 
-    // #[test]
-    // fn test_parse_command() {
-    //     assert_eq!(
-    //         parse_command("f=g"),
-    //         Ok(Command::Update(Func::new("f".into(), vec![], "g".into())))
-    //     );
+    #[test]
+    fn test_parse_command() {
+        assert_eq!(
+            parse_command("f=g"),
+            Ok(Command::Update(Func::new("f".into(), vec![], "g".into())))
+        );
 
-    //     assert_eq!(
-    //         parse_command("`ix = x"),
-    //         Ok(Command::Update(Func::new(
-    //             "i".into(),
-    //             vec!["x".into()],
-    //             "x".into()
-    //         )))
-    //     );
+        assert_eq!(
+            parse_command("i(x) = x"),
+            Ok(Command::Update(Func::new(
+                "i".into(),
+                vec!["x".into()],
+                "x".into()
+            )))
+        );
 
-    //     assert_eq!(
-    //         parse_command("```sxyz = ``xz`yz"),
-    //         Ok(Command::Update(Func::new(
-    //             "s".into(),
-    //             vec!["x".into(), "y".into(), "z".into()],
-    //             Expr::a(
-    //                 Expr::a("x".into(), "z".into()),
-    //                 Expr::a("y".into(), "z".into())
-    //             )
-    //         )))
-    //     );
+        assert_eq!(
+            parse_command("s(x, y, z) = ``xz`yz"),
+            Ok(Command::Update(Func::new(
+                "s".into(),
+                vec!["x".into(), "y".into(), "z".into()],
+                Expr::a(
+                    Expr::a("x".into(), "z".into()),
+                    Expr::a("y".into(), "z".into())
+                )
+            )))
+        );
 
-    //     assert_eq!(
-    //         parse_command("`ab"),
-    //         Ok(Command::Eval(Expr::a("a".into(), "b".into())))
-    //     );
+        assert_eq!(
+            parse_command("`ab"),
+            Ok(Command::Eval(Expr::a("a".into(), "b".into())))
+        );
 
-    //     assert_eq!(parse_command("? a"), Ok(Command::Info("a".into())));
+        assert_eq!(parse_command("? a"), Ok(Command::Info("a".into())));
 
-    //     assert_eq!(parse_command("?"), Ok(Command::Global));
+        assert_eq!(parse_command("?"), Ok(Command::Global));
 
-    //     assert!(parse_command("f=g h=i").is_err());
-    // }
+        assert!(parse_command("f=g h=i").is_err());
+    }
 
-    // #[test]
-    // fn test_command() {
-    //     assert_eq!(
-    //         command().easy_parse("f=g"),
-    //         Ok((
-    //             Command::Update(Func::new("f".into(), vec![], "g".into())),
-    //             ""
-    //         ))
-    //     );
+    #[test]
+    fn test_command() {
+        assert_eq!(
+            command().easy_parse("f=g"),
+            Ok((
+                Command::Update(Func::new("f".into(), vec![], "g".into())),
+                ""
+            ))
+        );
 
-    //     assert_eq!(
-    //         command().easy_parse("`ix = x"),
-    //         Ok((
-    //             Command::Update(Func::new("i".into(), vec!["x".into()], "x".into())),
-    //             ""
-    //         ))
-    //     );
+        assert_eq!(
+            command().easy_parse("i(x) = x"),
+            Ok((
+                Command::Update(Func::new("i".into(), vec!["x".into()], "x".into())),
+                ""
+            ))
+        );
 
-    //     assert_eq!(
-    //         command().easy_parse("```sxyz = ``xz`yz"),
-    //         Ok((
-    //             Command::Update(Func::new(
-    //                 "s".into(),
-    //                 vec!["x".into(), "y".into(), "z".into()],
-    //                 Expr::a(
-    //                     Expr::a("x".into(), "z".into()),
-    //                     Expr::a("y".into(), "z".into())
-    //                 )
-    //             )),
-    //             ""
-    //         ))
-    //     );
+        assert_eq!(
+            command().easy_parse("s(x, y, z) = ``xz`yz"),
+            Ok((
+                Command::Update(Func::new(
+                    "s".into(),
+                    vec!["x".into(), "y".into(), "z".into()],
+                    Expr::a(
+                        Expr::a("x".into(), "z".into()),
+                        Expr::a("y".into(), "z".into())
+                    )
+                )),
+                ""
+            ))
+        );
 
-    //     assert_eq!(
-    //         command().easy_parse("`ab"),
-    //         Ok((Command::Eval(Expr::a("a".into(), "b".into())), ""))
-    //     );
+        assert_eq!(
+            command().easy_parse("`ab"),
+            Ok((Command::Eval(Expr::a("a".into(), "b".into())), ""))
+        );
 
-    //     assert_eq!(
-    //         command().easy_parse("!`ab"),
-    //         Ok((Command::EvalLast(Expr::a("a".into(), "b".into())), ""))
-    //     );
+        assert_eq!(
+            command().easy_parse("!`ab"),
+            Ok((Command::EvalLast(Expr::a("a".into(), "b".into())), ""))
+        );
 
-    //     assert_eq!(
-    //         command().easy_parse("!42 `ab"),
-    //         Ok((Command::EvalHead(42, Expr::a("a".into(), "b".into())), ""))
-    //     );
+        assert_eq!(
+            command().easy_parse("!42 `ab"),
+            Ok((Command::EvalHead(42, Expr::a("a".into(), "b".into())), ""))
+        );
 
-    //     assert_eq!(
-    //         command().easy_parse("!-42 `ab"),
-    //         Ok((Command::EvalTail(42, Expr::a("a".into(), "b".into())), ""))
-    //     );
+        assert_eq!(
+            command().easy_parse("!-42 `ab"),
+            Ok((Command::EvalTail(42, Expr::a("a".into(), "b".into())), ""))
+        );
 
-    //     assert_eq!(
-    //         command().easy_parse("? a"),
-    //         Ok((Command::Info("a".into()), ""))
-    //     );
+        assert_eq!(
+            command().easy_parse("? a"),
+            Ok((Command::Info("a".into()), ""))
+        );
 
-    //     assert_eq!(command().easy_parse("?"), Ok((Command::Global, "")));
-    // }
+        assert_eq!(command().easy_parse("?"), Ok((Command::Global, "")));
+    }
 
-    // #[test]
-    // fn test_def() {
-    //     assert_eq!(
-    //         update().easy_parse("f=g"),
-    //         Ok((
-    //             Command::Update(Func::new("f".into(), vec![], "g".into())),
-    //             ""
-    //         ))
-    //     );
+    #[test]
+    fn test_def() {
+        assert_eq!(
+            update().easy_parse("f=g"),
+            Ok((
+                Command::Update(Func::new("f".into(), vec![], "g".into())),
+                ""
+            ))
+        );
 
-    //     assert_eq!(
-    //         update().easy_parse("f = g"),
-    //         Ok((
-    //             Command::Update(Func::new("f".into(), vec![], "g".into())),
-    //             ""
-    //         ))
-    //     );
+        assert_eq!(
+            update().easy_parse("f = g"),
+            Ok((
+                Command::Update(Func::new("f".into(), vec![], "g".into())),
+                ""
+            ))
+        );
 
-    //     assert_eq!(
-    //         update().easy_parse("`ix = x"),
-    //         Ok((
-    //             Command::Update(Func::new("i".into(), vec!["x".into()], "x".into())),
-    //             ""
-    //         ))
-    //     );
+        assert_eq!(
+            update().easy_parse("i(x) = x"),
+            Ok((
+                Command::Update(Func::new("i".into(), vec!["x".into()], "x".into())),
+                ""
+            ))
+        );
 
-    //     assert_eq!(
-    //         update().easy_parse("```sxyz = ``xz`yz"),
-    //         Ok((
-    //             Command::Update(Func::new(
-    //                 "s".into(),
-    //                 vec!["x".into(), "y".into(), "z".into()],
-    //                 Expr::a(
-    //                     Expr::a("x".into(), "z".into()),
-    //                     Expr::a("y".into(), "z".into())
-    //                 )
-    //             )),
-    //             ""
-    //         ))
-    //     );
-    // }
+        assert_eq!(
+            update().easy_parse("s(x, y, z) = ``xz`yz"),
+            Ok((
+                Command::Update(Func::new(
+                    "s".into(),
+                    vec!["x".into(), "y".into(), "z".into()],
+                    Expr::a(
+                        Expr::a("x".into(), "z".into()),
+                        Expr::a("y".into(), "z".into())
+                    )
+                )),
+                ""
+            ))
+        );
+    }
 
     #[test]
     fn test_def_lhs() {
@@ -380,34 +380,34 @@ mod tests {
         );
     }
 
-    // #[test]
-    // fn test_eval() {
-    //     assert_eq!(eval().easy_parse("a"), Ok((Command::Eval("a".into()), "")));
-    //     assert_eq!(
-    //         eval().easy_parse("`ab"),
-    //         Ok((Command::Eval(Expr::a("a".into(), "b".into())), ""))
-    //     );
-    // }
+    #[test]
+    fn test_eval() {
+        assert_eq!(eval().easy_parse("a"), Ok((Command::Eval("a".into()), "")));
+        assert_eq!(
+            eval().easy_parse("`ab"),
+            Ok((Command::Eval(Expr::a("a".into(), "b".into())), ""))
+        );
+    }
 
-    // #[test]
-    // fn test_info() {
-    //     assert_eq!(info().easy_parse("?a"), Ok((Command::Info("a".into()), "")));
-    //     assert_eq!(
-    //         info().easy_parse("? a"),
-    //         Ok((Command::Info("a".into()), ""))
-    //     );
-    // }
+    #[test]
+    fn test_info() {
+        assert_eq!(info().easy_parse("?a"), Ok((Command::Info("a".into()), "")));
+        assert_eq!(
+            info().easy_parse("? a"),
+            Ok((Command::Info("a".into()), ""))
+        );
+    }
 
-    // #[test]
-    // fn test_global() {
-    //     assert_eq!(global().easy_parse("?"), Ok((Command::Global, "")));
-    // }
+    #[test]
+    fn test_global() {
+        assert_eq!(global().easy_parse("?"), Ok((Command::Global, "")));
+    }
 
-    // #[test]
-    // fn test_unlambda() {
-    //     assert_eq!(
-    //         unlambda().easy_parse("??^x.x"),
-    //         Ok((Command::Unlambda(Expr::l("x".into(), "x".into())), ""))
-    //     );
-    // }
+    #[test]
+    fn test_unlambda() {
+        assert_eq!(
+            unlambda().easy_parse("??^x.x"),
+            Ok((Command::Unlambda(Expr::l("x".into(), "x".into())), ""))
+        );
+    }
 }
