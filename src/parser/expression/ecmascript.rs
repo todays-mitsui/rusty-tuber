@@ -115,7 +115,9 @@ where
         From<::std::num::ParseIntError>,
 {
     choice((
-        char('(').with(spaces().with(expr())).skip(spaces().with(char(')'))),
+        char('(')
+            .with(spaces().with(expr()))
+            .skip(spaces().with(char(')'))),
         symbol(),
         var(),
     ))

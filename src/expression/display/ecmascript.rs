@@ -59,17 +59,27 @@ impl<'a> AnotherExpr<'a> {
     fn to_string(&self) -> String {
         match self {
             AnotherExpr::Variable(label) => format!("{}", label),
+
             AnotherExpr::Symbol(label) => format!(":{}", label),
+
             AnotherExpr::Apply(e, args) => {
-                format!(
-                    "{}({})",
-                    e.to_string(),
-                    args.iter()
-                        .map(|arg| arg.to_string())
-                        .collect::<Vec<_>>()
-                        .join(", ")
-                )
+                let args = args
+                    .iter()
+                    .map(|arg| arg.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+
+                match **e {
+                    AnotherExpr::Variable(label) | AnotherExpr::Symbol(label) => {
+                        format!("{}({})", label, args)
+                    }
+
+                    _ => {
+                        format!("({})({})", e.to_string(), args)
+                    }
+                }
             }
+
             AnotherExpr::Lambda(params, body) => {
                 if params.len() == 1 {
                     return format!("{} => {}", params[0], body.to_string());
@@ -117,5 +127,10 @@ fn test_display() {
     assert_eq!(
         ECMAScriptStyle(&Expr::l("x".into(), Expr::l("y".into(), "x".into()))).to_string(),
         "(x, y) => x"
+    );
+
+    assert_eq!(
+        ECMAScriptStyle(&Expr::a(Expr::l("x".into(), "x".into()), "y".into())).to_string(),
+        "(x => x)(y)"
     );
 }
