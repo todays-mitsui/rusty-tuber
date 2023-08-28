@@ -1,26 +1,29 @@
 use crate::context::Context;
 use crate::expression::Expr;
 use crate::function::Func;
-use crate::function::{i, k, s};
-use crate::parser::expression::ecmascript::expr;
-#[allow(unused_imports)]
-use combine::EasyParser;
 
 impl Default for Context {
     fn default() -> Self {
         Context::from(vec![
-            i(),
-            k(),
-            s(),
+            Func::new("i".into(), vec!["x".into()], "x".into()),
+            Func::new("k".into(), vec!["x".into(), "y".into()], "x".into()),
+            Func::new(
+                "s".into(),
+                vec!["x".into(), "y".into(), "z".into()],
+                Expr::a(
+                    Expr::a("x".into(), "z".into()),
+                    Expr::a("y".into(), "z".into()),
+                ),
+            ),
             Func::new(
                 "TRUE".into(),
                 vec![],
-                expr().easy_parse("x=>y=>x").unwrap().0,
+                Expr::l("x".into(), Expr::l("y".into(), "x".into())),
             ),
             Func::new(
                 "FALSE".into(),
                 vec![],
-                expr().easy_parse("x=>y=>y").unwrap().0,
+                Expr::l("x".into(), Expr::l("y".into(), "y".into())),
             ),
             Func::new(
                 "IF".into(),
@@ -35,53 +38,123 @@ impl Default for Context {
             Func::new(
                 "AND".into(),
                 vec!["x".into(), "y".into()],
-                expr().easy_parse("x(y, FALSE)").unwrap().0,
+                Expr::a(Expr::a("x".into(), "y".into()), "FALSE".into()),
             ),
             Func::new(
                 "OR".into(),
                 vec!["x".into(), "y".into()],
-                expr().easy_parse("x(TRUE, y)").unwrap().0,
+                Expr::a(Expr::a("x".into(), "TRUE".into()), "y".into()),
             ),
             Func::new(
                 "XOR".into(),
                 vec!["x".into(), "y".into()],
-                expr().easy_parse("x(NOT(y), y)").unwrap().0,
+                Expr::a(
+                    Expr::a("x".into(), Expr::a("NOT".into(), "y".into())),
+                    "y".into(),
+                ),
             ),
             Func::new(
                 "CONS".into(),
                 vec!["x".into(), "y".into()],
-                expr().easy_parse("f=>f(x, y)").unwrap().0,
+                Expr::l(
+                    "f".into(),
+                    Expr::a(Expr::a("f".into(), "x".into()), "y".into()),
+                ),
             ),
             Func::new(
                 "CAR".into(),
                 vec!["x".into()],
-                expr().easy_parse("x(TRUE)").unwrap().0,
+                Expr::a("x".into(), "TRUE".into()),
             ),
             Func::new(
                 "CDR".into(),
                 vec!["x".into()],
-                expr().easy_parse("x(FALSE)").unwrap().0,
+                Expr::a("x".into(), "FALSE".into()),
             ),
             Func::new("NIL".into(), vec![], "FALSE".into()),
             Func::new(
                 "IS_NIL".into(),
-                vec![],
-                expr().easy_parse("x(_=>FALSE, TRUE)").unwrap().0,
+                vec!["x".into()],
+                Expr::a(
+                    Expr::a("x".into(), Expr::l("_".into(), "FALSE".into())),
+                    "TRUE".into(),
+                ),
+            ),
+            Func::new(
+                "Y".into(),
+                vec!["f".into()],
+                Expr::a(
+                    Expr::l(
+                        "x".into(),
+                        Expr::a("f".into(), Expr::a("x".into(), "x".into())),
+                    ),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a("f".into(), Expr::a("x".into(), "x".into())),
+                    ),
+                ),
+            ),
+            Func::new(
+                "Z".into(),
+                vec!["f".into()],
+                Expr::a(
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            "f".into(),
+                            Expr::l(
+                                "y".into(),
+                                Expr::a(Expr::a("x".into(), "x".into()), "y".into()),
+                            ),
+                        ),
+                    ),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            "f".into(),
+                            Expr::l(
+                                "y".into(),
+                                Expr::a(Expr::a("x".into(), "x".into()), "y".into()),
+                            ),
+                        ),
+                    ),
+                ),
             ),
             Func::new(
                 "IS_ZERO".into(),
                 vec!["n".into()],
-                expr().easy_parse("n(_=>FALSE, TRUE)").unwrap().0,
+                Expr::a(
+                    Expr::a("n".into(), Expr::l("_".into(), "FALSE".into())),
+                    "TRUE".into(),
+                ),
             ),
             Func::new(
                 "SUCC".into(),
                 vec!["n".into()],
-                expr().easy_parse("f=>x=>f(n(f, x))").unwrap().0,
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            "f".into(),
+                            Expr::a(Expr::a("n".into(), "f".into()), "x".into()),
+                        ),
+                    ),
+                ),
             ),
             Func::new(
                 "ADD".into(),
                 vec!["m".into(), "n".into()],
-                expr().easy_parse("f=>x=>m(f, n(f, x))").unwrap().0,
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            Expr::a("m".into(), "f".into()),
+                            Expr::a(Expr::a("n".into(), "f".into()), "x".into()),
+                        ),
+                    ),
+                ),
             ),
             Func::new(
                 "MUL".into(),
@@ -99,69 +172,289 @@ impl Default for Context {
             Func::new(
                 "PRED".into(),
                 vec!["n".into()],
-                expr()
-                    .easy_parse("f=>x=>n(g=>h=>h(g(f)), u=>x, u=>u)")
-                    .unwrap()
-                    .0,
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            Expr::a(
+                                Expr::a(
+                                    "n".into(),
+                                    Expr::l(
+                                        "g".into(),
+                                        Expr::l(
+                                            "h".into(),
+                                            Expr::a("h".into(), Expr::a("g".into(), "f".into())),
+                                        ),
+                                    ),
+                                ),
+                                Expr::l("u".into(), "x".into()),
+                            ),
+                            Expr::l("u".into(), "u".into()),
+                        ),
+                    ),
+                ),
             ),
             Func::new(
                 "SUB".into(),
                 vec!["m".into(), "n".into()],
-                expr().easy_parse("n(PRED, m)").unwrap().0,
+                Expr::a(Expr::a("n".into(), "PRED".into()), "m".into()),
             ),
             Func::new(
                 "GTE".into(),
                 vec!["m".into(), "n".into()],
-                expr().easy_parse("IS_ZERO(SUB(m, n))").unwrap().0,
+                Expr::a(
+                    "IS_ZERO".into(),
+                    Expr::a(Expr::a("SUB".into(), "n".into()), "m".into()),
+                ),
             ),
             Func::new(
                 "LTE".into(),
                 vec!["m".into(), "n".into()],
-                expr().easy_parse("IS_ZERO(SUB(m, n))").unwrap().0,
+                Expr::a(
+                    "IS_ZERO".into(),
+                    Expr::a(Expr::a("SUB".into(), "m".into()), "n".into()),
+                ),
             ),
             Func::new(
                 "EQ".into(),
                 vec!["m".into(), "n".into()],
-                expr().easy_parse("AND(GTE(m,n), LTE(m, n))").unwrap().0,
+                Expr::a(
+                    Expr::a(
+                        "AND".into(),
+                        Expr::a(Expr::a("GTE".into(), "m".into()), "n".into()),
+                    ),
+                    Expr::a(Expr::a("LTE".into(), "m".into()), "n".into()),
+                ),
             ),
-            Func::new("0".into(), vec![], expr().easy_parse("f=>x=>x").unwrap().0),
+            Func::new(
+                "0".into(),
+                vec![],
+                Expr::l("f".into(), Expr::l("x".into(), "x".into())),
+            ),
             Func::new(
                 "1".into(),
                 vec![],
-                expr().easy_parse("f=>x=>f(x)").unwrap().0,
+                Expr::l(
+                    "f".into(),
+                    Expr::l("x".into(), Expr::a("f".into(), "x".into())),
+                ),
             ),
             Func::new(
                 "2".into(),
                 vec![],
-                expr().easy_parse("f=>x=>f(f(x))").unwrap().0,
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a("f".into(), Expr::a("f".into(), "x".into())),
+                    ),
+                ),
             ),
             Func::new(
                 "3".into(),
                 vec![],
-                expr().easy_parse("f=>x=>f(f(f(x)))").unwrap().0,
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            "f".into(),
+                            Expr::a("f".into(), Expr::a("f".into(), "x".into())),
+                        ),
+                    ),
+                ),
             ),
-            Func::new("4".into(), vec![], expr().easy_parse("f=>x=>f(f(f(f(x))))").unwrap().0),
+            Func::new(
+                "4".into(),
+                vec![],
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            "f".into(),
+                            Expr::a(
+                                "f".into(),
+                                Expr::a("f".into(), Expr::a("f".into(), "x".into())),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
             Func::new(
                 "5".into(),
                 vec![],
-                expr().easy_parse("f=>x=>f(f(f(f(f(x)))))").unwrap().0,
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            "f".into(),
+                            Expr::a(
+                                "f".into(),
+                                Expr::a(
+                                    "f".into(),
+                                    Expr::a("f".into(), Expr::a("f".into(), "x".into())),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
             ),
             Func::new(
                 "6".into(),
                 vec![],
-                expr().easy_parse("MUL(2, 3)").unwrap().0,
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            "f".into(),
+                            Expr::a(
+                                "f".into(),
+                                Expr::a(
+                                    "f".into(),
+                                    Expr::a(
+                                        "f".into(),
+                                        Expr::a("f".into(), Expr::a("f".into(), "x".into())),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
             ),
             Func::new(
                 "7".into(),
                 vec![],
-                expr().easy_parse("f=>x=>f(f(f(f(f(f(f(x)))))))").unwrap().0,
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            "f".into(),
+                            Expr::a(
+                                "f".into(),
+                                Expr::a(
+                                    "f".into(),
+                                    Expr::a(
+                                        "f".into(),
+                                        Expr::a(
+                                            "f".into(),
+                                            Expr::a("f".into(), Expr::a("f".into(), "x".into())),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
             ),
-            Func::new("8".into(), vec![], expr().easy_parse("3(2)").unwrap().0),
-            Func::new("9".into(), vec![], expr().easy_parse("2(3)").unwrap().0),
+            Func::new(
+                "8".into(),
+                vec![],
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            "f".into(),
+                            Expr::a(
+                                "f".into(),
+                                Expr::a(
+                                    "f".into(),
+                                    Expr::a(
+                                        "f".into(),
+                                        Expr::a(
+                                            "f".into(),
+                                            Expr::a(
+                                                "f".into(),
+                                                Expr::a(
+                                                    "f".into(),
+                                                    Expr::a("f".into(), "x".into()),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            Func::new(
+                "9".into(),
+                vec![],
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            "f".into(),
+                            Expr::a(
+                                "f".into(),
+                                Expr::a(
+                                    "f".into(),
+                                    Expr::a(
+                                        "f".into(),
+                                        Expr::a(
+                                            "f".into(),
+                                            Expr::a(
+                                                "f".into(),
+                                                Expr::a(
+                                                    "f".into(),
+                                                    Expr::a(
+                                                        "f".into(),
+                                                        Expr::a("f".into(), "x".into()),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
             Func::new(
                 "10".into(),
                 vec![],
-                expr().easy_parse("MUL(2, 5)").unwrap().0,
+                Expr::l(
+                    "f".into(),
+                    Expr::l(
+                        "x".into(),
+                        Expr::a(
+                            "f".into(),
+                            Expr::a(
+                                "f".into(),
+                                Expr::a(
+                                    "f".into(),
+                                    Expr::a(
+                                        "f".into(),
+                                        Expr::a(
+                                            "f".into(),
+                                            Expr::a(
+                                                "f".into(),
+                                                Expr::a(
+                                                    "f".into(),
+                                                    Expr::a(
+                                                        "f".into(),
+                                                        Expr::a(
+                                                            "f".into(),
+                                                            Expr::a("f".into(), "x".into()),
+                                                        ),
+                                                    ),
+                                                ),
+                                            ),
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
             ),
         ])
     }
