@@ -46,33 +46,3 @@ impl Func {
         &self.body
     }
 }
-
-/// i := ^x.x
-pub fn i() -> Func {
-    Func {
-        name: "i".into(),
-        params: vec![Ident::new("x")],
-        body: Expr::v("x"),
-    }
-}
-
-/// k := ^x.^y.x
-pub fn k() -> Func {
-    Func {
-        name: "k".into(),
-        params: vec![Ident::new("x"), Ident::new("y")],
-        body: Expr::v("x"),
-    }
-}
-
-/// s := ^x.^y.^z.``xz`yz
-pub fn s() -> Func {
-    Func {
-        name: "s".into(),
-        params: vec![Ident::new("x"), Ident::new("y"), Ident::new("z")],
-        body: Expr::a(
-            Expr::a(Expr::v("x"), Expr::v("z")),
-            Expr::a(Expr::v("y"), Expr::v("z")),
-        ),
-    }
-}
