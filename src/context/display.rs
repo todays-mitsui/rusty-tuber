@@ -27,30 +27,36 @@ mod tests {
     use super::*;
     use crate::expression::Expr;
     use crate::function::Func;
+    use rand::seq::SliceRandom;
 
     #[test]
     fn test_display() {
-        let mut context = Context::new();
-        context.def(Func::new(
-            "i".into(),
-            vec!["x".into()],
-            Expr::Variable("x".into()),
-        ));
-        context.def(Func::new(
-            "l".into(),
-            vec!["x".into(), "y".into()],
-            Expr::Variable("x".into()),
-        ));
-        context.def(Func::new(
-            "K".into(),
-            vec!["x".into(), "y".into()],
-            Expr::Variable("x".into()),
-        ));
-        context.def(Func::new(
-            "k".into(),
-            vec!["x".into(), "y".into()],
-            Expr::Variable("x".into()),
-        ));
+        let mut funcs = [
+            Func::new("i".into(), vec!["x".into()], Expr::Variable("x".into())),
+            Func::new(
+                "k".into(),
+                vec!["x".into(), "y".into()],
+                Expr::Variable("x".into()),
+            ),
+            Func::new(
+                "K".into(),
+                vec!["x".into(), "y".into()],
+                Expr::Variable("x".into()),
+            ),
+            Func::new(
+                "l".into(),
+                vec!["x".into(), "y".into()],
+                Expr::Variable("x".into()),
+            ),
+        ];
+
+        // funcs を事前にシャッフルしてから Context を作る
+        // これによって Context の印字が Func の順序依存でないことを確かめる
+
+        let mut rng = rand::thread_rng();
+        funcs.shuffle(&mut rng);
+
+        let context = Context::from(funcs.to_vec());
 
         assert_eq!(
             format!("{}", context),

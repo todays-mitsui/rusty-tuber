@@ -401,6 +401,7 @@ dependencies = [
  "combine",
  "glob",
  "home-dir",
+ "rand",
  "regex",
  "ulid",
 ]
