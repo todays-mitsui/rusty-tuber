@@ -142,7 +142,7 @@ parser! {
     ]
     {
         spaces()
-            .with(char('^'))
+            .with(choice((char('^'), char('λ'))))
             .with(
                 identifier()
                 .skip(spaces().with(char('.'))
@@ -155,7 +155,6 @@ parser! {
 #[test]
 fn test_lambda() {
     assert!(expr().easy_parse("^a").is_err());
-
     assert_eq!(
         expr().easy_parse("^a.b"),
         Ok((Expr::l("a".into(), "b".into()), ""))
@@ -164,12 +163,40 @@ fn test_lambda() {
         expr().easy_parse(" ^ a . b"),
         Ok((Expr::l("a".into(), "b".into()), ""))
     );
+
+    assert!(expr().easy_parse("λa").is_err());
+    assert_eq!(
+        expr().easy_parse("λa.b"),
+        Ok((Expr::l("a".into(), "b".into()), ""))
+    );
+    assert_eq!(
+        expr().easy_parse(" λ a . b"),
+        Ok((Expr::l("a".into(), "b".into()), ""))
+    );
+
     assert_eq!(
         expr().easy_parse("^a.^b.c"),
         Ok((Expr::l("a".into(), Expr::l("b".into(), "c".into())), ""))
     );
     assert_eq!(
+        expr().easy_parse("λa.λb.c"),
+        Ok((Expr::l("a".into(), Expr::l("b".into(), "c".into())), ""))
+    );
+    assert_eq!(
+        expr().easy_parse("λa.^b.c"),
+        Ok((Expr::l("a".into(), Expr::l("b".into(), "c".into())), ""))
+    );
+
+    assert_eq!(
         expr().easy_parse(" ^ a . ^ b . c"),
+        Ok((Expr::l("a".into(), Expr::l("b".into(), "c".into())), ""))
+    );
+    assert_eq!(
+        expr().easy_parse(" λ a . λ b . c"),
+        Ok((Expr::l("a".into(), Expr::l("b".into(), "c".into())), ""))
+    );
+    assert_eq!(
+        expr().easy_parse(" ^ a . λ b . c"),
         Ok((Expr::l("a".into(), Expr::l("b".into(), "c".into())), ""))
     );
 }
