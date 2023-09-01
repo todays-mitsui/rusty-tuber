@@ -1,4 +1,5 @@
 mod default;
+mod display;
 
 use std::collections::HashMap;
 

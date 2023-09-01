@@ -41,6 +41,12 @@ impl std::fmt::Display for Ident {
     }
 }
 
+impl AsRef<str> for Ident {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
 #[test]
 fn test_new_name() {
     let mut set: HashSet<Ident> = HashSet::new();
