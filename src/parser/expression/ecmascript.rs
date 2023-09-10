@@ -114,13 +114,37 @@ where
     <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
         From<::std::num::ParseIntError>,
 {
-    choice((
-        char('(')
-            .with(spaces().with(expr()))
-            .skip(spaces().with(char(')'))),
-        symbol(),
-        var(),
-    ))
+    callable_()
+}
+
+parser! {
+    fn callable_[Input]()(Input) -> Expr
+    where [
+        Input: Stream<Token = char>,
+        Input::Error: ParseError<char, Input::Range, Input::Position>,
+        <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+            From<::std::num::ParseIntError>,
+    ]
+    {
+        spaces().with(choice((
+            parens(callable()),
+            attempt(lambda()),
+            symbol(),
+            var(),
+        )))
+    }
+}
+
+fn parens<Input, Output>(parser: impl Parser<Input, Output = Output>) -> impl Parser<Input, Output = Output>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+        From<::std::num::ParseIntError>,
+{
+    char('(')
+        .with(spaces().with(parser))
+        .skip(spaces().with(char(')')))
 }
 
 fn args<Input>() -> impl Parser<Input, Output = Vec<Expr>>
@@ -130,19 +154,17 @@ where
     <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
         From<::std::num::ParseIntError>,
 {
-    char('(')
-        .with(
-            optional(many(attempt(
-                spaces().with(expr()).skip(spaces()).skip(char(',')),
-            )))
-            .and(spaces().with(expr()))
-            .map(|(es, e)| {
-                let mut es = es.unwrap_or_else(Vec::new);
-                es.push(e);
-                es
-            }),
-        )
-        .skip(spaces().with(char(')')))
+    parens(
+        optional(many(attempt(
+            spaces().with(expr()).skip(spaces()).skip(char(',')),
+        )))
+        .and(spaces().with(expr()))
+        .map(|(es, e)| {
+            let mut es = es.unwrap_or_else(Vec::new);
+            es.push(e);
+            es
+        })
+    )
 }
 
 #[test]
