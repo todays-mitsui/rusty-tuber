@@ -2,7 +2,7 @@ use combine::parser::char::{char, spaces, string};
 use combine::parser::choice::choice;
 #[allow(unused_imports)]
 use combine::EasyParser;
-use combine::{attempt, many, optional, parser, ParseError, Parser, Stream};
+use combine::{attempt, many, many1, optional, parser, ParseError, Parser, Stream};
 
 use crate::expression::Expr;
 use crate::identifier::Ident;
@@ -96,11 +96,14 @@ parser! {
         spaces()
             .with(callable())
             .and(
-                spaces().with(args())
+                many1(spaces().with(args()))
             )
-            .map(|(mut e, args)| {
-                for arg in args {
-                    e = Expr::a(e, arg);
+            .map(|(mut e, argss)| {
+                let _: Vec<Vec<Expr>> = argss;
+                for args in argss {
+                    for arg in args {
+                        e = Expr::a(e, arg);
+                    }
                 }
                 e
             })
@@ -127,24 +130,12 @@ parser! {
     ]
     {
         spaces().with(choice((
-            parens(callable()),
+            parens(callable()),  // パーレンで囲まれている式はパーレンを剥がしてから再度パースを試みる
             attempt(lambda()),
             symbol(),
             var(),
         )))
     }
-}
-
-fn parens<Input, Output>(parser: impl Parser<Input, Output = Output>) -> impl Parser<Input, Output = Output>
-where
-    Input: Stream<Token = char>,
-    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
-    <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
-        From<::std::num::ParseIntError>,
-{
-    char('(')
-        .with(spaces().with(parser))
-        .skip(spaces().with(char(')')))
 }
 
 fn args<Input>() -> impl Parser<Input, Output = Vec<Expr>>
@@ -158,35 +149,43 @@ where
         optional(many(attempt(
             spaces().with(expr()).skip(spaces()).skip(char(',')),
         )))
-        .and(spaces().with(expr()))
-        .map(|(es, e)| {
-            let mut es = es.unwrap_or_else(Vec::new);
-            es.push(e);
-            es
-        })
+        .and(spaces().with(expr())),
     )
+    .map(|(es, e)| {
+        let mut es = es.unwrap_or_else(Vec::new);
+        es.push(e);
+        es
+    })
 }
 
 #[test]
 fn test_apply() {
     assert_eq!(
-        expr().easy_parse("a(b)"),
+        apply().easy_parse("a(b)"),
         Ok((Expr::a("a".into(), "b".into()), ""))
     );
     assert_eq!(
-        expr().easy_parse(" a (  b   )"),
+        apply().easy_parse("(a)(b)"),
         Ok((Expr::a("a".into(), "b".into()), ""))
     );
     assert_eq!(
-        expr().easy_parse("a(b, c)"),
+        apply().easy_parse("a(b)(c)"),
         Ok((Expr::a(Expr::a("a".into(), "b".into()), "c".into()), ""))
     );
     assert_eq!(
-        expr().easy_parse(" a ( b ,  c  )"),
+        apply().easy_parse(" a (  b   )"),
+        Ok((Expr::a("a".into(), "b".into()), ""))
+    );
+    assert_eq!(
+        apply().easy_parse("a(b, c)"),
         Ok((Expr::a(Expr::a("a".into(), "b".into()), "c".into()), ""))
     );
     assert_eq!(
-        expr().easy_parse("FOO(BAR)"),
+        apply().easy_parse(" a ( b ,  c  )"),
+        Ok((Expr::a(Expr::a("a".into(), "b".into()), "c".into()), ""))
+    );
+    assert_eq!(
+        apply().easy_parse("FOO(BAR)"),
         Ok((Expr::a("FOO".into(), "BAR".into()), ""))
     );
 }
@@ -227,37 +226,61 @@ where
     <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
         From<::std::num::ParseIntError>,
 {
-    char('(')
-        .with(
-            optional(many(attempt(
-                spaces().with(identifier()).skip(spaces()).skip(char(',')),
-            )))
-            .and(spaces().with(identifier()))
-            .map(|(is, i)| {
-                let mut is = is.unwrap_or_else(Vec::new);
-                is.push(i);
-                is
-            }),
-        )
-        .skip(spaces().with(char(')')))
+    parens(
+        optional(many(attempt(
+            spaces().with(identifier()).skip(spaces()).skip(char(',')),
+        )))
+        .and(spaces().with(identifier())),
+    )
+    .map(|(is, i)| {
+        let mut is = is.unwrap_or_else(Vec::new);
+        is.push(i);
+        is
+    })
 }
 
 #[test]
 fn test_lambda() {
     assert_eq!(
-        expr().easy_parse("a=>b"),
+        lambda().easy_parse("a=>b"),
         Ok((Expr::l("a".into(), "b".into()), ""))
     );
     assert_eq!(
-        expr().easy_parse(" a   =>  b"),
+        lambda().easy_parse(" a   =>  b"),
         Ok((Expr::l("a".into(), "b".into()), ""))
     );
     assert_eq!(
-        expr().easy_parse("a => b => c"),
+        lambda().easy_parse("a => b => c"),
         Ok((Expr::l("a".into(), Expr::l("b".into(), "c".into())), ""))
     );
     assert_eq!(
-        expr().easy_parse("(a, b) => c"),
+        lambda().easy_parse("(a, b) => c"),
         Ok((Expr::l("a".into(), Expr::l("b".into(), "c".into())), ""))
     );
+}
+
+// ========================================================================== //
+
+fn parens<Input, Output>(
+    parser: impl Parser<Input, Output = Output>,
+) -> impl Parser<Input, Output = Output>
+where
+    Input: Stream<Token = char>,
+    Input::Error: ParseError<Input::Token, Input::Range, Input::Position>,
+    <Input::Error as ParseError<Input::Token, Input::Range, Input::Position>>::StreamError:
+        From<::std::num::ParseIntError>,
+{
+    spaces()
+        .with(char('('))
+        .with(spaces().with(parser))
+        .skip(spaces().with(char(')')))
+}
+
+#[test]
+fn test_parens() {
+    assert_eq!(parens(char('a')).easy_parse("(a)"), Ok(('a', "")));
+    assert_eq!(parens(char('a')).easy_parse(" ( a )"), Ok(('a', "")));
+
+    assert!(parens(char('a')).easy_parse("a").is_err());
+    assert!(parens(char('a')).easy_parse("((a))").is_err());
 }
