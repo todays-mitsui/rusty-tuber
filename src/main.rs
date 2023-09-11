@@ -1,4 +1,5 @@
 mod command;
+mod config;
 mod context;
 mod engine;
 mod evaluate;
@@ -7,7 +8,6 @@ mod function;
 mod history;
 mod identifier;
 mod parser;
-mod config;
 
 use clap::Parser;
 

@@ -2,6 +2,7 @@ extern crate glob;
 use crate::command::display::ecmascript::ECMAScriptStyle;
 use crate::command::display::lazy_k::LazyKStyle;
 use crate::command::Command;
+use crate::config::{display_style, DisplayStyle};
 use crate::context::Context;
 use crate::parser::command::ecmascript::parse_command as parse_ecmascript_style_command;
 use crate::parser::command::lazy_k::parse_command as parse_lazy_k_style_command;
@@ -12,7 +13,6 @@ use std::fs::File;
 use std::io::{self, BufRead, Write};
 use std::path::Path;
 use ulid::Ulid;
-use crate::config::{display_style, DisplayStyle};
 
 pub fn open_or_create_history_file() -> File {
     let dir = Path::new("~/.tuber")

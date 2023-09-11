@@ -1,12 +1,12 @@
 use crate::command::Command;
 use crate::context::Context;
 // use crate::display_style::DisplayStyle;
+use crate::config::{display_style, step_limit, DisplayStyle};
 use crate::evaluate::EvalSteps;
 use crate::expression::display::ecmascript::ECMAScriptStyle as ExprECMAScriptStyle;
 use crate::expression::display::lazy_k::LazyKStyle as ExprLazyKStyle;
 use crate::function::display::ecmascript::ECMAScriptStyle as FuncECMAScriptStyle;
 use crate::function::display::lazy_k::LazyKStyle as FuncLazyKStyle;
-use crate::config::{step_limit, display_style, DisplayStyle};
 
 pub struct Engine {
     context: Context,
