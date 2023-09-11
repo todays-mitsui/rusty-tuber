@@ -2,8 +2,8 @@ extern crate glob;
 use crate::command::display::ecmascript::ECMAScriptStyle;
 use crate::command::display::lazy_k::LazyKStyle;
 use crate::command::Command;
+use crate::config::{display_style, DisplayStyle};
 use crate::context::Context;
-use crate::display_style::DisplayStyle;
 use crate::parser::command::ecmascript::parse_command as parse_ecmascript_style_command;
 use crate::parser::command::lazy_k::parse_command as parse_lazy_k_style_command;
 use glob::glob;
@@ -66,7 +66,7 @@ pub struct Logger<W: Write>(W, DisplayStyle);
 
 impl<W: Write> Logger<W> {
     pub fn new(writer: W) -> Self {
-        Logger(writer, DisplayStyle::get())
+        Logger(writer, display_style())
     }
 
     pub fn push(&mut self, command: &Command) {

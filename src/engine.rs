@@ -1,6 +1,7 @@
 use crate::command::Command;
 use crate::context::Context;
-use crate::display_style::DisplayStyle;
+// use crate::display_style::DisplayStyle;
+use crate::config::{display_style, step_limit, DisplayStyle};
 use crate::evaluate::EvalSteps;
 use crate::expression::display::ecmascript::ECMAScriptStyle as ExprECMAScriptStyle;
 use crate::expression::display::lazy_k::LazyKStyle as ExprLazyKStyle;
@@ -16,7 +17,7 @@ impl Engine {
     pub fn new(context: Context) -> Self {
         Self {
             context,
-            display_style: DisplayStyle::get(),
+            display_style: display_style(),
         }
     }
 
@@ -31,13 +32,8 @@ impl Engine {
             }
 
             Command::Eval(e) => {
-                // match &self.display_style {
-                //     DisplayStyle::LazyK => println!("{}", ExprLazyKStyle(&e)),
-                //     DisplayStyle::Ecmascript => println!("{}", ExprECMAScriptStyle(&e)),
-                // }
-
                 let steps = EvalSteps::new(e, &self.context);
-                for e in steps.take(1000) {
+                for e in steps.take(step_limit()) {
                     match &self.display_style {
                         DisplayStyle::LazyK => println!("→ {}", ExprLazyKStyle(&e)),
                         DisplayStyle::Ecmascript => println!("→ {}", ExprECMAScriptStyle(&e)),

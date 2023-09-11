@@ -1,6 +1,6 @@
 mod command;
+mod config;
 mod context;
-mod display_style;
 mod engine;
 mod evaluate;
 mod expression;
