@@ -130,7 +130,11 @@ parser! {
     ]
     {
         spaces().with(choice((
-            parens(callable()),  // パーレンで囲まれている式はパーレンを剥がしてから再度パースを試みる
+            attempt(parens(expr())), // パーレンで囲まれている式はパーレンを剥がしてから再度パースを試みる
+
+            // パーレンで囲まれていない場合、その後に許されるのは関数抽象, 変数, シンボルのみ
+            // つまり、パーレンで囲まれていない形での関数適用は弾く
+            // ここで関数適用を弾いておかないと左再帰で無限ループしてしまう
             attempt(lambda()),
             symbol(),
             var(),
@@ -173,6 +177,10 @@ fn test_apply() {
         Ok((Expr::a(Expr::a("a".into(), "b".into()), "c".into()), ""))
     );
     assert_eq!(
+        apply().easy_parse("(a(b))(c)"),
+        Ok((Expr::a(Expr::a("a".into(), "b".into()), "c".into()), ""))
+    );
+    assert_eq!(
         apply().easy_parse(" a (  b   )"),
         Ok((Expr::a("a".into(), "b".into()), ""))
     );
@@ -187,6 +195,14 @@ fn test_apply() {
     assert_eq!(
         apply().easy_parse("FOO(BAR)"),
         Ok((Expr::a("FOO".into(), "BAR".into()), ""))
+    );
+    assert_eq!(
+        apply().easy_parse(":a(b)"),
+        Ok((Expr::a(":a".into(), "b".into()), ""))
+    );
+    assert_eq!(
+        apply().easy_parse("(x => x)(a)"),
+        Ok((Expr::a(Expr::l("x".into(), "x".into()), "a".into()), ""))
     );
 }
 
